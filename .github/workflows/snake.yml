@@ -1,0 +1,38 @@
+name: Generate Snake
+
+# Builds the contribution-snake SVGs (dark + light) into the `output` branch.
+# Run it once manually from the Actions tab (Run workflow) to create the branch;
+# after that it refreshes every 12h and on every push to main.
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Generate snake SVGs
+        uses: Platane/snk@v3
+        id: snake-gen
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          outputs: |
+            dist/github-snake.svg?color_snake=%23612C46&color_dots=%23ddd2b4,%23bcd49a,%238fbf5f,%234f8f35,%23266F35
+            dist/github-snake-dark.svg?color_snake=%23bd5c89&color_dots=%2315161f,%23163F1E,%23266F35,%23369E4B,%235cc46f
+
+      - name: Push to output branch
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: output
+          build_dir: dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
