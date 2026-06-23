@@ -1,11 +1,12 @@
 <!--
   McVarHQ profile README — Game Boy COLORSWALL theme, dark + light variants.
-  Custom SVGs (header, dividers, tech-stack, cartridges) theme-switch via
+  Custom SVGs (header, dividers, tech-stack) theme-switch via
   #gh-dark-mode-only / #gh-light-mode-only on relative <img> paths (branch-
-  agnostic). External widgets (stats, streak, langs, graph, trophies, pins,
-  snake) are SINGLE transparent images — GitHub can't reliably theme-switch
-  proxied images, so transparent backgrounds let one copy read on both themes.
-  Snake comes from the 'output' branch made by .github/workflows/snake.yml.
+  agnostic). The cartridge buttons + external widgets (stats, streak, langs,
+  graph, trophies, pins, snake) are SINGLE images — GitHub can't reliably
+  theme-switch proxied or linked images, so they use transparent/adaptive art.
+  The snake is committed to assets/github-snake.svg on the default branch by
+  .github/workflows/snake.yml (run it once from the Actions tab).
   PLACEHOLDERS to drop in yourself:
     - Pinned-repo cards always point at github.com/McVarHQ/<repo> (your real
       projects), regardless of which profile this README is pushed to.
@@ -14,10 +15,8 @@
     - The LIGHT-mode centre image is generators/gameboy_528_396.png, baked
       into assets/tech_stack_light.svg. To use your real 528x396 image, drop
       it in and re-run generators/gen_yolo.py (or just send it to me).
-    - resume/resume.pdf
-    - credentials/aws.pdf, credentials/cdl.pdf
-    - credentials/ethical_hacking.pdf, credentials/entrepreneurship.pdf
-    - credentials/{c,cpp,java,python,php-mysql}.pdf
+    - resume/  (drop your resume.pdf in here — the RESUME cartridge opens this folder)
+    - credentials/  (drop all your cert PDFs in here — the CREDENTIALS cartridge opens this folder)
 -->
 <div align="center">
 
@@ -39,7 +38,7 @@
 
 <img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
 
-<img alt="pinned repositories" src="assets/cart_repos_dark.svg#gh-dark-mode-only" width="210"><img alt="pinned repositories" src="assets/cart_repos_light.svg#gh-light-mode-only" width="210">
+<a href="https://github.com/McVarHQ?tab=repositories"><img alt="pinned repositories" src="assets/cart_repos_uni.svg" width="210"></a>
 
 <a href="https://github.com/McVarHQ/FairGavel"><img alt="FairGavel" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=FairGavel&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>&nbsp;<a href="https://github.com/McVarHQ/Potability-App"><img alt="Potability-App" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=Potability-App&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>
 
@@ -59,24 +58,11 @@
 
 <img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
 
-<img alt="certifications" src="assets/cart_certs_dark.svg#gh-dark-mode-only" width="210"><img alt="certifications" src="assets/cart_certs_light.svg#gh-light-mode-only" width="210">
-
-**`CLOUD`**  
-<a href="credentials/aws.pdf"><img alt="AWS" src="https://img.shields.io/badge/AWS-Cloud%20Practitioner-5DB5B7?style=for-the-badge&logo=amazonwebservices&logoColor=white&labelColor=143033"></a><a href="credentials/cdl.pdf"><img alt="GCP" src="https://img.shields.io/badge/GCP-Digital%20Leader-5DB5B7?style=for-the-badge&logo=googlecloud&logoColor=white&labelColor=143033"></a>
-
-**`NPTEL`**  
-<a href="credentials/ethical_hacking.pdf"><img alt="NPTEL" src="https://img.shields.io/badge/NPTEL-Ethical%20Hacking-8A3F64?style=for-the-badge&logo=hackthebox&logoColor=white&labelColor=2a1019"></a><a href="credentials/entrepreneurship.pdf"><img alt="NPTEL" src="https://img.shields.io/badge/NPTEL-Entrepreneurship-8A3F64?style=for-the-badge&labelColor=2a1019"></a>
-
-**`SPOKEN-TUTORIAL`**  
-<a href="credentials/c.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-C-369E4B?style=for-the-badge&logo=c&logoColor=white&labelColor=0a2010"></a><a href="credentials/cpp.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-C%2B%2B-369E4B?style=for-the-badge&logo=cplusplus&logoColor=white&labelColor=0a2010"></a><a href="credentials/java.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-Java-369E4B?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=0a2010"></a><a href="credentials/python.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-Python-369E4B?style=for-the-badge&logo=python&logoColor=white&labelColor=0a2010"></a><a href="credentials/php-mysql.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-PHP%20%26%20MySQL-369E4B?style=for-the-badge&logo=php&logoColor=white&labelColor=0a2010"></a>
-
-<img alt="resume" src="assets/cart_resume_dark.svg#gh-dark-mode-only" width="210"><img alt="resume" src="assets/cart_resume_light.svg#gh-light-mode-only" width="210">
-
-**[`▸ OPEN RESUME`](resume/resume.pdf)**
+<a href="credentials"><img alt="credentials" src="assets/cart_credentials_uni.svg" width="250"></a>&nbsp;&nbsp;<a href="resume"><img alt="resume" src="assets/cart_resume_uni.svg" width="250"></a>
 
 <img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
 
-<img alt="contribution snake" src="https://raw.githubusercontent.com/McVarHQ/McVarHQ/output/github-snake.svg" width="820">
+<img alt="contribution snake" src="assets/github-snake.svg" width="820">
 
 <sub>`◖ INSERT COIN TO CONTINUE ◗`</sub>
 
