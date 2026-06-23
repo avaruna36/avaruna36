@@ -4,13 +4,17 @@
   find-and-replace '/main/assets' below. The snake URLs point at the 'output'
   branch created by .github/workflows/snake.yml (run it once from the Actions tab).
   PLACEHOLDERS to drop in yourself:
+    - Pinned-repo cards always point at github.com/McVarHQ/<repo> (your real
+      projects), regardless of which profile this README is pushed to.
+    - Stats/streak/top-langs/trophies/snake reflect whichever account this repo
+      lives in — they'll look empty on a fresh test profile, that's expected.
     - The LIGHT-mode centre image is generators/gameboy_528_396.png, baked
       into assets/tech_stack_light.svg. To use your real 528x396 image, drop
       it in and re-run generators/gen_yolo.py (or just send it to me).
     - resume/resume.pdf
-    - cloud/aws.pdf, cloud/cdl.pdf
-    - nptel/ethical_hacking.pdf, nptel/entrepreneurship.pdf
-    - spoken-tutorial/{c,cpp,java,python,php-mysql}.pdf
+    - credentials/aws.pdf, credentials/cdl.pdf
+    - credentials/ethical_hacking.pdf, credentials/entrepreneurship.pdf
+    - credentials/{c,cpp,java,python,php-mysql}.pdf
 -->
 <div align="center">
 
@@ -55,13 +59,13 @@
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/McVarHQ/McVarHQ/main/assets/cart_certs_dark.svg"><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/McVarHQ/McVarHQ/main/assets/cart_certs_light.svg"><img alt="certifications" src="https://raw.githubusercontent.com/McVarHQ/McVarHQ/main/assets/cart_certs_light.svg" width="210"></picture>
 
 **`CLOUD`**  
-<a href="cloud/aws.pdf"><img alt="AWS" src="https://img.shields.io/badge/AWS-Cloud%20Practitioner-5DB5B7?style=for-the-badge&logo=amazonwebservices&logoColor=white&labelColor=143033"></a><a href="cloud/cdl.pdf"><img alt="GCP" src="https://img.shields.io/badge/GCP-Digital%20Leader-5DB5B7?style=for-the-badge&logo=googlecloud&logoColor=white&labelColor=143033"></a>
+<a href="credentials/aws.pdf"><img alt="AWS" src="https://img.shields.io/badge/AWS-Cloud%20Practitioner-5DB5B7?style=for-the-badge&logo=amazonwebservices&logoColor=white&labelColor=143033"></a><a href="credentials/cdl.pdf"><img alt="GCP" src="https://img.shields.io/badge/GCP-Digital%20Leader-5DB5B7?style=for-the-badge&logo=googlecloud&logoColor=white&labelColor=143033"></a>
 
 **`NPTEL`**  
-<a href="nptel/ethical_hacking.pdf"><img alt="NPTEL" src="https://img.shields.io/badge/NPTEL-Ethical%20Hacking-8A3F64?style=for-the-badge&logo=hackthebox&logoColor=white&labelColor=2a1019"></a><a href="nptel/entrepreneurship.pdf"><img alt="NPTEL" src="https://img.shields.io/badge/NPTEL-Entrepreneurship-8A3F64?style=for-the-badge&labelColor=2a1019"></a>
+<a href="credentials/ethical_hacking.pdf"><img alt="NPTEL" src="https://img.shields.io/badge/NPTEL-Ethical%20Hacking-8A3F64?style=for-the-badge&logo=hackthebox&logoColor=white&labelColor=2a1019"></a><a href="credentials/entrepreneurship.pdf"><img alt="NPTEL" src="https://img.shields.io/badge/NPTEL-Entrepreneurship-8A3F64?style=for-the-badge&labelColor=2a1019"></a>
 
 **`SPOKEN-TUTORIAL`**  
-<a href="spoken-tutorial/c.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-C-369E4B?style=for-the-badge&logo=c&logoColor=white&labelColor=0a2010"></a><a href="spoken-tutorial/cpp.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-C%2B%2B-369E4B?style=for-the-badge&logo=cplusplus&logoColor=white&labelColor=0a2010"></a><a href="spoken-tutorial/java.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-Java-369E4B?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=0a2010"></a><a href="spoken-tutorial/python.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-Python-369E4B?style=for-the-badge&logo=python&logoColor=white&labelColor=0a2010"></a><a href="spoken-tutorial/php-mysql.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-PHP%20%26%20MySQL-369E4B?style=for-the-badge&logo=php&logoColor=white&labelColor=0a2010"></a>
+<a href="credentials/c.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-C-369E4B?style=for-the-badge&logo=c&logoColor=white&labelColor=0a2010"></a><a href="credentials/cpp.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-C%2B%2B-369E4B?style=for-the-badge&logo=cplusplus&logoColor=white&labelColor=0a2010"></a><a href="credentials/java.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-Java-369E4B?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=0a2010"></a><a href="credentials/python.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-Python-369E4B?style=for-the-badge&logo=python&logoColor=white&labelColor=0a2010"></a><a href="credentials/php-mysql.pdf"><img alt="Spoken Tutorial" src="https://img.shields.io/badge/Spoken%20Tutorial-PHP%20%26%20MySQL-369E4B?style=for-the-badge&logo=php&logoColor=white&labelColor=0a2010"></a>
 
 <a href="resume/resume.pdf"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/McVarHQ/McVarHQ/main/assets/cart_resume_dark.svg"><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/McVarHQ/McVarHQ/main/assets/cart_resume_light.svg"><img alt="open resume" src="https://raw.githubusercontent.com/McVarHQ/McVarHQ/main/assets/cart_resume_light.svg" width="210"></picture></a>
 
