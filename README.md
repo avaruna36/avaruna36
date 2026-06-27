@@ -1,28 +1,21 @@
 <!--
-  ============================================================
-  SAMPLE README — Panel 1 (gap-free strips + live Profile Views)
-  ============================================================
-  UPLOAD TO REPO ROOT:
-    panel1_left.svg, strip_before_yt.svg, strip_youtube.svg,
-    strip_email.svg, strip_profileviews.svg, strip_after_pv.svg
+  SAMPLE README — Panel 1. Upload to repo root:
+    panel1_left.svg, strip_before_yt.svg, strip_youtube.svg, strip_email.svg
+    (and panel1_anim.svg only if you use the FALLBACK at the bottom)
 
-  GAP FIX: each strip is in its OWN table row with border-collapse:collapse and
-  zero padding/line-height, and there is NO whitespace between tags inside a cell.
-  That removes the inline-image whitespace that caused the white lines.
-
-  PROFILE VIEWS: the strip shows the GameBoy "PROFILE VIEWS" label (value slot left
-  open). The LIVE count is the komarev badge placed right after it in the same row
-  (plum #803F64 to match). Its digits are the badge font (not GameBoy) — the
-  accepted trade for a live number. Replace McVarHQ with your username.
+  Profile Views removed. Chips: YouTube (top), Email (bottom).
+  Two cells: [left animation] | [right column of 3 stacked strips].
+  Strips use display:block + no whitespace between tags to kill inline gaps.
 -->
 
-<table style="border-collapse:collapse;border-spacing:0" cellspacing="0" cellpadding="0" border="0">
-<tr>
-<td rowspan="5" valign="top" style="padding:0;line-height:0"><img src="./panel1_left.svg" alt="Hi! Have you met VAROON" height="329"></td>
-<td valign="top" style="padding:0;line-height:0"><img src="./strip_before_yt.svg" width="279" alt=""></td>
-</tr>
-<tr><td valign="top" style="padding:0;line-height:0"><a href="https://youtube.com/@varoonsnook"><img src="./strip_youtube.svg" width="279" alt="YouTube: VAROONSNOOK"></a></td></tr>
-<tr><td valign="top" style="padding:0;line-height:0"><a href="mailto:mcblcvr@gmail.com"><img src="./strip_email.svg" width="279" alt="Email: MCBLCVR"></a></td></tr>
-<tr><td valign="middle" style="padding:0;line-height:0;position:relative"><a href="https://github.com/McVarHQ"><img src="./strip_profileviews.svg" width="279" alt="Profile Views"></a><a href="https://github.com/McVarHQ"><img src="https://komarev.com/ghpvc/?username=McVarHQ&style=flat-square&color=803F64&label=" alt="views" valign="middle"></a></td></tr>
-<tr><td valign="top" style="padding:0;line-height:0"><img src="./strip_after_pv.svg" width="279" alt=""></td></tr>
-</table>
+<!-- ============ PRIMARY: clickable chips ============ -->
+<table cellspacing="0" cellpadding="0" border="0"><tr>
+<td valign="top"><img src="./panel1_left.svg" alt="Hi! Have you met VAROON" height="329" style="display:block"></td><td valign="top"><img src="./strip_before_yt.svg" width="279" alt="" style="display:block"><a href="https://youtube.com/@varoonsnook" style="display:block;line-height:0"><img src="./strip_youtube.svg" width="279" alt="YouTube: VAROONSNOOK" style="display:block"></a><a href="mailto:mcblcvr@gmail.com" style="display:block;line-height:0"><img src="./strip_email.svg" width="279" alt="Email: MCBLCVR" style="display:block"></a></td>
+</tr></table>
+
+<!-- ============ FALLBACK (if the strips still show gaps) ============
+     One complete panel SVG: perfectly seamless, animation + both chips drawn in,
+     but chips are NOT clickable. Delete the table above and uncomment this:
+
+<p><img src="./panel1_anim.svg" alt="Hi! Have you met VAROON" width="880"></p>
+-->
