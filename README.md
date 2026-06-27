@@ -1,51 +1,44 @@
 <!--
   ============================================================
-  SAMPLE README — Panel 1 (split: animated tile + clickable chips)
+  SAMPLE README — Panel 1 (left animation + 5 stacked right strips)
   ============================================================
   UPLOAD THESE FILES TO THE REPO ROOT (same folder as README.md):
-    panel1_left.svg          (animated console: title, code, VAROON)
-    tile_youtube.svg         (clickable YouTube chip)
-    tile_email.svg           (clickable Email chip)
-    tile_profileviews.svg    (clickable Profile Views chip — static "35";
-                              live count is the badge variant noted below)
+    panel1_left.svg            (animated console: title, code, VAROON)
+    strip_before_yt.svg        (top frame + cyan above YouTube)      -- not clickable
+    strip_youtube.svg          (YouTube chip row)                    -- clickable
+    strip_email.svg            (Email chip row)                      -- clickable
+    strip_profileviews.svg     (Profile Views chip row)              -- clickable
+    strip_after_pv.svg         (cyan + bottom frame below Profile)   -- not clickable
 
-  HOW THE SPLIT WORKS / WHY:
-  - GitHub renders SVGs via <img>: SMIL animation RUNS, but links INSIDE an SVG
-    do NOT. So the panel is split into tiles laid out by an HTML <table>:
-      * LEFT cell  = panel1_left.svg (the animation). Not clickable (no links needed).
-      * RIGHT cells = the three chips, each its own <img> wrapped in <a> -> clickable.
-  - The seam between left tile and chip column falls in the empty cyan gap after
-    VAROON, so it should be invisible. If your browser/zoom shows a hairline gap,
-    that's GitHub's responsive image scaling; see the SINGLE-IMAGE fallback at the
-    bottom (one complete panel, animation + chips, but chips not clickable).
+  HOW IT WORKS:
+  - The panel is split into a LEFT animation tile + a RIGHT half that is sliced
+    into 5 full-width horizontal strips, stacked in ONE table cell. Each strip
+    carries its own slice of cyan + bezel, so the panel reassembles seamlessly.
+  - The 3 chip strips are each wrapped in <a> -> clickable. The before/after
+    strips are clickable regions too (they just point at the profile / are inert);
+    that's fine per your spec -- only the whole panel must NOT be one big link.
+  - The cut lines fall in the cyan gaps between chips, so nothing is split.
 
   PROFILE VIEWS LIVE COUNT:
-  - tile_profileviews.svg shows a static "35" in GameBoy font (matches design).
-  - For a LIVE count, swap that chip's <img> for the komarev badge (commented in).
-    Its digits are the service's font, not GameBoy — unavoidable for a live number.
+  - strip_profileviews.svg shows a static "35" in GameBoy font (matches design).
+  - To make the count LIVE, that strip would need to embed a remote badge, which
+    forces a non-GameBoy digit font. Kept static-GameBoy here; ask if you want the
+    live-badge variant for this strip.
 -->
 
-<!-- ===== PANEL 1: HEADER (split tiles) ===== -->
+<!-- ===== PANEL 1: HEADER (left tile + 5 stacked right strips) ===== -->
 <table cellspacing="0" cellpadding="0" border="0"><tr>
-  <td valign="top" rowspan="3"><img src="./panel1_left.svg" alt="Hi! Have you met VAROON" height="329"></td>
-  <td valign="top"><a href="https://youtube.com/@varoonsnook"><img src="./tile_youtube.svg" alt="YouTube: VAROONSNOOK"></a></td>
-</tr>
-<tr>
-  <td valign="top"><a href="mailto:mcblcvr@gmail.com"><img src="./tile_email.svg" alt="Email: MCBLCVR"></a></td>
-</tr>
-<tr>
-  <td valign="top"><a href="https://github.com/McVarHQ"><img src="./tile_profileviews.svg" alt="Profile Views"></a></td>
-  <!-- LIVE count alternative (digits in service font, not GameBoy):
-  <td valign="top"><a href="https://github.com/McVarHQ"><img src="https://komarev.com/ghpvc/?username=McVarHQ&style=flat-square&color=803F64&label=PROFILE+VIEWS"></a></td>
-  -->
+
+  <!-- LEFT: the animation -->
+  <td valign="top"><img src="./panel1_left.svg" alt="Hi! Have you met VAROON" height="329"></td>
+
+  <!-- RIGHT: 5 full-width strips stacked in one cell -->
+  <td valign="top">
+    <img src="./strip_before_yt.svg" alt="" width="279"><br>
+    <a href="https://youtube.com/@varoonsnook"><img src="./strip_youtube.svg" alt="YouTube: VAROONSNOOK" width="279"></a><br>
+    <a href="mailto:mcblcvr@gmail.com"><img src="./strip_email.svg" alt="Email: MCBLCVR" width="279"></a><br>
+    <a href="https://github.com/McVarHQ"><img src="./strip_profileviews.svg" alt="Profile Views" width="279"></a><br>
+    <img src="./strip_after_pv.svg" alt="" width="279">
+  </td>
+
 </tr></table>
-
-<br>
-
-<!--
-  ===== SINGLE-IMAGE FALLBACK (if the split shows gaps) =====
-  One complete panel SVG (animation + chips drawn inside). Looks perfectly
-  seamless, but the chips are NOT clickable. Uncomment to use instead:
-
-  <p><img src="./panel1_anim.svg" alt="Hi! Have you met VAROON" width="880"></p>
--->
