@@ -1,69 +1,47 @@
 <!--
-  McVarHQ profile README — Game Boy COLORSWALL theme, dark + light variants.
-  Custom SVGs (header, dividers, tech-stack) theme-switch via
-  #gh-dark-mode-only / #gh-light-mode-only on relative <img> paths (branch-
-  agnostic). The cartridge buttons + external widgets (stats, streak, langs,
-  graph, trophies, pins, snake) are SINGLE images — GitHub can't reliably
-  theme-switch proxied or linked images, so they use transparent/adaptive art.
-  The snake is committed to assets/github-snake.svg on the default branch by
-  .github/workflows/snake.yml (run it once from the Actions tab).
-  PLACEHOLDERS to drop in yourself:
-    - Pinned-repo cards always point at github.com/McVarHQ/<repo> (your real
-      projects), regardless of which profile this README is pushed to.
-    - Stats/streak/top-langs/trophies/snake reflect whichever account this repo
-      lives in — they'll look empty on a fresh test profile, that's expected.
-    - The LIGHT-mode centre image is generators/gameboy_528_396.png, baked
-      into assets/tech_stack_light.svg. To use your real 528x396 image, drop
-      it in and re-run generators/gen_yolo.py (or just send it to me).
-    - resume/  (drop your resume.pdf in here — the RESUME cartridge opens this folder)
-    - credentials/  (drop all your cert PDFs in here — the CREDENTIALS cartridge opens this folder)
+  ============================================================
+  SAMPLE README — Panel 1 (animated header) test
+  ============================================================
+  HOW TO TEST THIS ON GITHUB
+  1. Create a repo named EXACTLY your username (e.g. McVarHQ/McVarHQ)
+     -> a repo whose name == your username renders its README on your profile.
+     (Any test repo also works; the profile-view counter just needs a stable repo.)
+  2. Upload BOTH files to the repo root:
+       - README.md            (this file)
+       - panel1_anim.svg      (the animated header panel)
+  3. Open the repo on GitHub. The SVG animation plays in the rendered README
+     (GitHub runs SMIL inside <img>). The links below the panel are clickable.
+
+  NOTES / KNOWN GITHUB CONSTRAINTS (so nothing surprises you):
+  - GitHub renders the SVG via <img>, which is sandboxed: SMIL animation RUNS,
+    but links INSIDE the SVG do NOT work. That is why the clickable links live
+    in the README body, directly under the panel (handoff decision B5).
+  - One image can carry only one wrapping link on GitHub, so the three targets
+    (YouTube / Email / Profile Views) are real markdown links in a row beneath
+    the panel rather than per-chip hotspots on the image.
+  - Profile Views is a LIVE counter (komarev). Its digits are in the counter
+    service's font, not Early-GameBoy — that is unavoidable for a live count.
+    The "PROFILE VIEWS" chip drawn inside the panel is the GameBoy-styled label;
+    the live number is the badge in the link row.
 -->
-<div align="center">
 
-<img alt="VAROON — game dev x deep learning" src="assets/header_dark.svg#gh-dark-mode-only" width="820"><img alt="VAROON — game dev x deep learning" src="assets/header_light.svg#gh-light-mode-only" width="820">
+<!-- ===================== PANEL 1: HEADER ===================== -->
 
-<img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
+<p align="center">
+  <img src="./panel1_anim.svg" alt="Hi! Have you met VAROON" width="880">
+</p>
 
-<a href="https://www.linkedin.com/in/varun-anbalagan/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-varun--anbalagan-5DB5B7?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=143033"></a>
-<a href="https://www.youtube.com/@varoonsnook"><img alt="YouTube" src="https://img.shields.io/badge/YouTube-varoonsnook-D31E25?style=for-the-badge&logo=youtube&logoColor=white&labelColor=2a0608"></a>
-<a href="mailto:mcblcvr@gmail.com"><img alt="Email" src="https://img.shields.io/badge/Email-mcblcvr-D7A32E?style=for-the-badge&logo=gmail&logoColor=2a2008&labelColor=2a2008"></a>
-&nbsp;
-<img alt="profile views" src="https://komarev.com/ghpvc/?username=McVarHQ&style=for-the-badge&color=8A3F64&label=PROFILE+VIEWS">
-
-<img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
-
-### `>` TECH_STACK.detect()
-
-<img alt="tech stack detector" src="assets/tech_stack_dark.svg#gh-dark-mode-only" width="560"><img alt="tech stack detector" src="assets/tech_stack_light.svg#gh-light-mode-only" width="560">
-
-<img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
-
-<a href="https://github.com/McVarHQ?tab=repositories"><img alt="pinned repositories" src="assets/cart_repos_uni.svg" width="210"></a>
-
-<a href="https://github.com/McVarHQ/FairGavel"><img alt="FairGavel" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=FairGavel&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>&nbsp;<a href="https://github.com/McVarHQ/Potability-App"><img alt="Potability-App" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=Potability-App&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>
-
-<a href="https://github.com/McVarHQ/IRS-Sleep-Position-Prediction"><img alt="IRS-Sleep-Position-Prediction" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=IRS-Sleep-Position-Prediction&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>&nbsp;<a href="https://github.com/McVarHQ/Unity-Projects"><img alt="Unity-Projects" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=Unity-Projects&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>
-
-<a href="https://github.com/McVarHQ/Computer-Vision"><img alt="Computer-Vision" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=Computer-Vision&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>&nbsp;<a href="https://github.com/McVarHQ/Unreal-Engine-Projects"><img alt="Unreal-Engine-Projects" src="https://github-readme-stats.vercel.app/api/pin/?username=McVarHQ&repo=Unreal-Engine-Projects&show_owner=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400"></a>
-
-<img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
-
-<img alt="github stats" src="https://github-readme-stats.vercel.app/api?username=McVarHQ&show_icons=true&include_all_commits=true&count_private=true&hide_border=false&title_color=8A3F64&icon_color=5DB5B7&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="400">&nbsp;<img alt="streak" src="https://streak-stats.demolab.com?user=McVarHQ&hide_border=false&background=00000000&border=8A3F64&stroke=8A3F64&ring=8A3F64&fire=D7A32E&currStreakNum=8A3F64&sideNums=8A3F64&currStreakLabel=5DB5B7&sideLabels=8b8b9a&dates=8b8b9a" width="400">
-
-<img alt="top languages" src="https://github-readme-stats.vercel.app/api/top-langs/?username=McVarHQ&layout=compact&langs_count=8&hide=jupyter%20notebook&hide_border=false&title_color=8A3F64&text_color=8b8b9a&bg_color=00000000&border_color=8A3F64" width="380">
-
-<img alt="contribution graph" src="https://github-readme-activity-graph.vercel.app/graph?username=McVarHQ&bg_color=00000000&color=8A3F64&line=5DB5B7&point=D7A32E&area=true&area_color=8A3F64&hide_border=false&custom_title=CONTRIBUTION%20GRAPH" width="820">
-
-<img alt="trophies" src="https://github-profile-trophy.vercel.app/?username=McVarHQ&theme=gruvbox&no-bg=true&no-frame=true&column=7&margin-w=8&margin-h=8" width="820">
-
-<img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
-
-<a href="credentials"><img alt="credentials" src="assets/cart_credentials_uni.svg" width="250"></a>&nbsp;&nbsp;<a href="resume"><img alt="resume" src="assets/cart_resume_uni.svg" width="250"></a>
-
-<img alt="divider" src="assets/divider_dark.svg#gh-dark-mode-only" width="820"><img alt="divider" src="assets/divider_light.svg#gh-light-mode-only" width="820">
-
-<img alt="contribution snake" src="assets/github-snake.svg" width="820">
-
-<sub>`◖ INSERT COIN TO CONTINUE ◗`</sub>
-
-</div>
+<!-- Clickable links for the chips shown in the panel above -->
+<p align="center">
+  <a href="https://youtube.com/@varoonsnook">
+    <img alt="YouTube" src="https://img.shields.io/badge/YOUTUBE-VAROONSNOOK-D31E25?style=flat-square&labelColor=2A0608">
+  </a>
+  &nbsp;
+  <a href="mailto:mcblcvr@gmail.com">
+    <img alt="Email" src="https://img.shields.io/badge/EMAIL-MCBLCVR-D7A32E?style=flat-square&labelColor=2A2008">
+  </a>
+  &nbsp;
+  <a href="https://github.com/McVarHQ">
+    <img alt="Profile Views" src="https://komarev.com/ghpvc/?username=McVarHQ&style=flat-square&color=803F64&label=PROFILE+VIEWS">
+  </a>
+</p>
