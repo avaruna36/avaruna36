@@ -1,21 +1,33 @@
 <!--
   SAMPLE README — Panel 1. Upload to repo root:
-    panel1_left.svg, strip_before_yt.svg, strip_youtube.svg, strip_email.svg
-    (and panel1_anim.svg only if you use the FALLBACK at the bottom)
+    panel1_left.svg, right_top.svg, right_bottom.svg
+    (panel1_anim.svg only if you use the FALLBACK)
 
-  Profile Views removed. Chips: YouTube (top), Email (bottom).
-  Two cells: [left animation] | [right column of 3 stacked strips].
-  Strips use display:block + no whitespace between tags to kill inline gaps.
+  Chips: YouTube (top), Email (bottom). Profile Views removed.
+
+  FIXES vs last screenshot:
+  - SCALE: GitHub stripped the inline style= (that broke sizing). This version uses
+    ONLY width= attributes that GitHub keeps. Native sizes: left=600w, right pieces
+    =279w. 600+279 = the real panel width, same scale, no drift.
+  - GAP: the right half is now just TWO pieces with ONE seam, and that seam sits in
+    the empty cyan band between the chips. Each piece is in its own borderless table
+    row (cellspacing=0). One seam in cyan is far more forgiving than 5 strips.
+
+  If it STILL shows a seam, use the FALLBACK at the bottom (one seamless SVG, not
+  clickable) — that is the guaranteed option.
 -->
 
-<!-- ============ PRIMARY: clickable chips ============ -->
-<table cellspacing="0" cellpadding="0" border="0"><tr>
-<td valign="top"><img src="./panel1_left.svg" alt="Hi! Have you met VAROON" height="329" style="display:block"></td><td valign="top"><img src="./strip_before_yt.svg" width="279" alt="" style="display:block"><a href="https://youtube.com/@varoonsnook" style="display:block;line-height:0"><img src="./strip_youtube.svg" width="279" alt="YouTube: VAROONSNOOK" style="display:block"></a><a href="mailto:mcblcvr@gmail.com" style="display:block;line-height:0"><img src="./strip_email.svg" width="279" alt="Email: MCBLCVR" style="display:block"></a></td>
-</tr></table>
+<!-- ===== PRIMARY: clickable (YouTube top piece, Email bottom piece) ===== -->
+<table cellspacing="0" cellpadding="0" border="0">
+<tr>
+<td rowspan="2" valign="top"><img src="./panel1_left.svg" width="600" alt="Hi! Have you met VAROON"></td>
+<td valign="bottom"><a href="https://youtube.com/@varoonsnook"><img src="./right_top.svg" width="279" alt="YouTube: VAROONSNOOK"></a></td>
+</tr>
+<tr>
+<td valign="top"><a href="mailto:mcblcvr@gmail.com"><img src="./right_bottom.svg" width="279" alt="Email: MCBLCVR"></a></td>
+</tr>
+</table>
 
-<!-- ============ FALLBACK (if the strips still show gaps) ============
-     One complete panel SVG: perfectly seamless, animation + both chips drawn in,
-     but chips are NOT clickable. Delete the table above and uncomment this:
-
-<p><img src="./panel1_anim.svg" alt="Hi! Have you met VAROON" width="880"></p>
+<!-- ===== FALLBACK (seamless, not clickable). Delete table above, uncomment:
+<p><img src="./panel1_anim.svg" width="880" alt="Hi! Have you met VAROON"></p>
 -->
