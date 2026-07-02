@@ -49,6 +49,6 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add panel4_radar.svg trophy_case.svg trophy_case.md
+          git add panel4_radar.svg panel4_trophies.svg trophy_case.svg trophy_case.md
           git diff --cached --quiet || git commit -m "chore: refresh radar panel + trophy case"
           git push
