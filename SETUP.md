@@ -8,16 +8,22 @@ fresh SVG. The README just points at `panel4_radar.svg` like any other image.
 - **L-shaped Curry-Gold panel** (locked bevel recipe: OFF=9, BEV=5, BW=18),
   bottom-right 350x350 notch left open for the `more(me)` square.
 - **Prompt** `> github.exe -RADAR` — VT323 40px, black, pulsing (panel-2/3 style).
-- **Radar** (left arm): COMMITS / PRS / ISSUES / REVIEWS from your last 12
-  months (`contributionsCollection`), blackberry polygon on diamond rings,
-  raw counts on each axis, grow-in animation.
-- **Trophies** (top band): STARS, COMMITS, PRS, FOLLOWERS pixel cups with
-  rank letters (C/B/A/S by thresholds in `THRESH`), staggered pop-in.
+- **Radar** (left arm): COMMITS / PRS / ISSUES / REVIEWS — **ALL-TIME** totals
+  (PRs/issues via direct counts; commits/reviews summed year-by-year, since
+  GitHub caps `contributionsCollection` to 1-year windows). Small `ALL-TIME`
+  legend in the corner. Grow-in animation.
+- **Trophies** (top band): two-tone pixel cups with glint, rank letter on the
+  cup, label+value on the black base plaque. Which ones show is picked by
+  `TROPHIES_SHOW` in `gen_radar.py`.
+- **Trophy case**: `gen_trophy_case.py` (runs in the same workflow) renders
+  ALL 8 available trophies (stars/commits/prs/issues/reviews/followers/repos/
+  contrib) with current values, ranks and thresholds to `trophy_case.svg` +
+  `trophy_case.md` — browse it, then set `TROPHIES_SHOW` to your picks.
 
 ## Install (your profile repo, e.g. McVarHQ/McVarHQ)
 1. Copy into the repo root:
    - `.github/workflows/radar.yml`
-   - `scripts/gen_radar.py`, `scripts/fonts.py`, `scripts/palette.py`
+   - `scripts/gen_radar.py`, `scripts/gen_trophy_case.py`, `scripts/fonts.py`, `scripts/palette.py`
    - `fonts/Early_GameBoy.ttf`, `fonts/VT323-Regular.ttf`  ← you must add the TTFs
 2. Commit. The workflow runs on push (and nightly, and via the *Run workflow*
    button under Actions). It writes/updates `panel4_radar.svg` in the repo root.
