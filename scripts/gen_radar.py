@@ -27,8 +27,8 @@ OFF=9; BEV=5; BW=18
 # ------------------------------------------------------------- geometry ----
 # ONE L drawing; vertical cut at CUTX. Right piece height B_H.
 M=6
-PW,PH = 865,606
-NW,NH = 375,432                      # bottom-right bite (more(me) pocket)
+PW,PH = 865,539
+NW,NH = 375,365                      # bottom-right bite (square more(me) pocket)
 OX,OY = M,M
 CW = M+PW+OFF+M                      # 886
 CH = M+PH+OFF+M                      # 627
