@@ -24,13 +24,13 @@ OFF=9; BEV=5; BW=18
 
 # ------------------------------------------------------------- geometry ----
 M=6
-PW,PH = 865,525
-NW,NH = 375,351                      # pocket sized so arm piece height == mm canvas (357)
+PW,PH = 865,543
+NW,NH = 368,369                      # pocket sized so arm-piece height == mm canvas (371)
 OX,OY = M,M
 CW = M+PW+OFF+M                      # 886
 CH = M+PH+OFF+M                      # 546 -> arm piece = 546-189 = 357
 CUTY = OY+(PH-NH)+OFF                # 189: horizontal cut (band piece height)
-ARM_W = 515                          # arm piece width (pads so display gap aligns)
+ARM_W = 516                          # arm piece width (right edges align at 880 display)
 
 IX0,IY0 = OX+BW, OY+BW
 IX1     = OX+PW-BW                   # 853
@@ -167,7 +167,7 @@ def rank_radius(key, val):
     return 1.0
 
 # -------------------------------------------------------------- trophies ---
-TROPHIES_SHOW=["stars","commits","prs"]
+TROPHIES_SHOW=["stars","commits","prs","followers"]
 
 LABELS={"stars":"STARS","commits":"COMMITS","prs":"PRS","issues":"ISSUES",
         "reviews":"REVIEWS","followers":"FOLLOWERS","repos":"REPOS",
@@ -200,7 +200,7 @@ TROPHY=[
  "...X...",
  "..XXX..",
 ]
-CELL=7                                  # bigger trophies
+CELL=8                                  # bigger trophies
 
 def draw_trophy(gx, ty, key, val, static=True, glim_begin=None):
     letter,colr=rank_of(key,val)
@@ -225,15 +225,15 @@ def draw_trophy(gx, ty, key, val, static=True, glim_begin=None):
                    f'repeatCount="indefinite"/></g>')
     cup.append(f'<rect x="{px(ox-cell)}" y="{px(ty)}" width="{cell}" height="{cell*2}" fill="{dark}"/>')
     cup.append(f'<rect x="{px(ox+tw)}" y="{px(ty)}" width="{cell}" height="{cell*2}" fill="{dark}"/>')
-    cup.append(F.text_svg(letter,'gb',16,gx,ty+2*cell+13,BLACK,anchor='middle')[0])
-    pw=max(tw+4*cell, F.measure(LABELS[key],'gb',9)+16)
+    cup.append(F.text_svg(letter,'gb',18,gx,ty+2*cell+14,BLACK,anchor='middle')[0])
+    pw=max(tw+4*cell, F.measure(LABELS[key],'gb',10)+18)
     pxq=gx-pw/2; pyq=ty+6*cell+3
     edge=_shade(GOLD,-0.35)
-    cup.append(f'<rect x="{px(pxq)}" y="{px(pyq)}" width="{px(pw)}" height="32" '
+    cup.append(f'<rect x="{px(pxq)}" y="{px(pyq)}" width="{px(pw)}" height="34" '
                f'fill="{BLACK}" stroke="{edge}" stroke-width="2"/>')
     cup.append(f'<rect x="{px(pxq)}" y="{px(pyq)}" width="{px(pw)}" height="3" fill="{edge}"/>')
-    cup.append(F.text_svg(LABELS[key],'gb',9,gx,pyq+14,WHITE,anchor='middle')[0])
-    cup.append(F.text_svg(str(val),'vt',16,gx,pyq+28,WHITE,anchor='middle')[0])
+    cup.append(F.text_svg(LABELS[key],'gb',10,gx,pyq+15,WHITE,anchor='middle')[0])
+    cup.append(F.text_svg(str(val),'vt',17,gx,pyq+30,WHITE,anchor='middle')[0])
     return cup, pw
 
 def trophies(stats, static):
@@ -241,11 +241,11 @@ def trophies(stats, static):
     card(s) pop first, others fan outward from centre; then glimmer loop."""
     s=[]
     items=TROPHIES_SHOW; n=len(items)
-    ty=IY0+14
-    TH=6*CELL+3+32
+    ty=IY0+12
+    TH=6*CELL+3+34
     step=30.0/n
     centre=(n-1)/2.0
-    pitch=56                             # spread out (still overlapping)
+    pitch=64                             # spread out (still overlapping)
     outer=max(abs(0-centre),abs(n-1-centre))*step
     Rpiv=( (n-1)/2.0*pitch )/max(math.sin(math.radians(outer)),1e-6) if n>1 else 0
     gxc=(529+IX1)/2                      # centred over the pocket column
