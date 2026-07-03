@@ -23,14 +23,14 @@ RED  =P.PALETTE["fireball_red"]
 OFF=9; BEV=5; BW=18
 
 # ------------------------------------------------------------- geometry ----
-M=6
+M=6; ML=30; MR=22                    # side margins match panels 1/2 art offsets at 808px
 PW,PH = 865,543
-NW,NH = 368,369                      # pocket sized so arm-piece height == mm canvas (371)
-OX,OY = M,M
-CW = M+PW+OFF+M                      # 886
-CH = M+PH+OFF+M                      # 546 -> arm piece = 546-189 = 357
+NW,NH = 374,369
+OX,OY = ML,M
+CW = ML+PW+OFF+MR                    # 926
+CH = M+PH+OFF+M                      # 564 -> arm piece height = 375 = mm canvas
 CUTY = OY+(PH-NH)+OFF                # 189: horizontal cut (band piece height)
-ARM_W = 516                          # arm piece width (right edges align at 880 display)
+ARM_W = 532                          # arm piece width (mm right edge lands on band art right)
 
 IX0,IY0 = OX+BW, OY+BW
 IX1     = OX+PW-BW                   # 853
@@ -248,7 +248,7 @@ def trophies(stats, static):
     pitch=64                             # spread out (still overlapping)
     outer=max(abs(0-centre),abs(n-1-centre))*step
     Rpiv=( (n-1)/2.0*pitch )/max(math.sin(math.radians(outer)),1e-6) if n>1 else 0
-    gxc=(529+IX1)/2                      # centred over the pocket column
+    gxc=((OX+PW-NW)+IX1)/2               # centred over the pocket column
     pivx, pivy = gxc, ty+TH+Rpiv
     for i,key in enumerate(items):
         tilt=(i-centre)*step
