@@ -5,12 +5,12 @@
 -->
 
 <!-- ===================== PANEL 1: HEADER ===================== -->
-<p align="center">
+<p>
   <img src="./panel1_anim.svg" alt="Hi! Have you met VAROON" width="880">
 </p>
 
 <!-- ===================== PANEL 2: TECH STACK WHEEL ===================== -->
-<p align="center">
+<p>
   <img src="./panel2_anim.svg" alt="tech_stack.detect()" width="880">
 </p>
 
@@ -21,7 +21,7 @@
 <!-- ===================== PANEL 4: RADAR + TROPHIES + more(me) ===================== -->
 <!-- panel4_band.svg + panel4_arm.svg regenerated DAILY (03:17 UTC) by .github/workflows/radar.yml -->
 <!-- prettier-ignore -->
-<table align="center"><tr><td>
+<p>
 <img src="./panel4_band.svg" width="880" hspace="0" vspace="0" align="left"/><img src="./panel4_arm.svg" width="512" hspace="0" vspace="0" align="left"/><img src="./mm_top.svg" width="355" hspace="0" vspace="0" align="left"/><a href="./resume/"><img src="./mm_resume.svg" width="355" hspace="0" vspace="0" align="left"/></a><a href="./credentials/"><img src="./mm_cred.svg" width="355" hspace="0" vspace="0" align="left"/></a>
+</p>
 <br clear="both"/>
-</td></tr></table>

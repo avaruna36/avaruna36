@@ -279,7 +279,7 @@ def radar(stats, static):
     lext=12+F.measure("REVIEWS",'gb',LS)
     rext=12+F.measure("PRS",'gb',LS)
     cx=(IX0+ARM_X1)/2 + (lext-rext)/2
-    cy=(IY0+52+ARM_Y1)/2                 # vertically centred in the gold column
+    cy=(CUTY+ARM_Y1)/2                   # radar lives FULLY in the arm piece (below the cut)
     axes=[("COMMITS","commits",(0,-1)),
           ("PRS","prs",(1,0)),
           ("ISSUES","issues",(0,1)),
