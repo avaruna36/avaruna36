@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """
-Panel 4 generator — one L-shaped composition (radar in the arm, fanned
-trophies in the band), emitted as TWO vertically-cut SVGs whose junction
-edges are OPEN — on GitHub they sit side by side and read as a single L
-cut apart. more(me) (static, separate) nests under the trophies piece.
-
-Outputs per run:
-  panel4_radar.svg     — left piece  (tall: band-left + arm + radar) 529xH
-  panel4_trophies.svg  — right piece (band-right + trophy fan)       357x189
+Panel 4 — one L composition (prompt + trophies in the band, radar in the arm),
+emitted as TWO horizontally-cut SVGs:
+  panel4_band.svg — full-width band (886x189): prompt + trophy fan
+  panel4_arm.svg  — arm (515x357): radar (its top rows live in the band piece;
+                    float-stacked rows butt at 0px so the cut is invisible)
+more(me) (static, square) floats beside the arm in the pocket.
 """
 import sys, os, json, argparse, math, urllib.request
 sys.path.insert(0, os.path.dirname(__file__))
@@ -25,27 +23,24 @@ RED  =P.PALETTE["fireball_red"]
 OFF=9; BEV=5; BW=18
 
 # ------------------------------------------------------------- geometry ----
-# ONE L drawing; vertical cut at CUTX. Right piece height B_H.
 M=6
-PW,PH = 865,539
-NW,NH = 375,365                      # bottom-right bite (square more(me) pocket)
+PW,PH = 865,525
+NW,NH = 375,351                      # pocket sized so arm piece height == mm canvas (357)
 OX,OY = M,M
 CW = M+PW+OFF+M                      # 886
-CH = M+PH+OFF+M                      # 627
-CUTX=529                             # cut through the band; A=529, B=357
-B_H = OY+(PH-NH)+OFF                 # right piece: band + border + shadow = 189
+CH = M+PH+OFF+M                      # 546 -> arm piece = 546-189 = 357
+CUTY = OY+(PH-NH)+OFF                # 189: horizontal cut (band piece height)
+ARM_W = 515                          # arm piece width (pads so display gap aligns)
 
 IX0,IY0 = OX+BW, OY+BW
-IX1     = OX+PW-BW                   # 853 (interior right, band)
-ARM_X1  = OX+PW-NW-BW                # 478 (interior right, arm)
-ARM_Y1  = OY+PH-BW                   # 594
-BAND_B  = OY+PH-NH                   # 180 (outer band bottom)
-BAND_IB = BAND_B-BW                  # 162 (interior band bottom)
+IX1     = OX+PW-BW                   # 853
+ARM_X1  = OX+PW-NW-BW                # 478
+ARM_Y1  = OY+PH-BW                   # 519
+BAND_IB = OY+(PH-NH)-BW              # 162 (interior band bottom)
 
 def px(v): return f"{v:.1f}"
 
 def l_frame():
-    """locked raised-bevel L (shadow, plum, light/dark bevel, gold fill)."""
     s=[]
     x0,y0,x1,y1 = OX,OY,OX+PW,OY+PH
     nx,ny = x1-NW, y1-NH
@@ -65,7 +60,11 @@ def l_frame():
 # --------------------------------------------------------- typed prompt ----
 PROMPT_TXT="> github.exe -RDR -TRPH"
 T0=0.35; CPS=0.05
-T_DONE=T0+len(PROMPT_TXT)*CPS
+T_DONE=T0+len(PROMPT_TXT)*CPS        # 1.5s
+T_PULSE=T_DONE+0.30                  # prompt starts pulsing
+T_GRID=T_DONE+0.25                   # empty graph pops
+T_SON=T_DONE+0.90                    # first sonar wave launches
+T_POLY=T_SON+0.55                    # wave "paints" the data polygon
 
 def corner_prompt(static):
     s=[]
@@ -90,7 +89,7 @@ def corner_prompt(static):
                      f'begin="{t:.2f}s" fill="freeze"/>{g}</g>')
     s.append(f'<g>{"".join(chars)}'
              f'<animate attributeName="opacity" values="1;0.35;1" dur="1.1s" '
-             f'begin="{T_DONE+0.3:.2f}s" repeatCount="indefinite"/></g>')
+             f'begin="{T_PULSE:.2f}s" repeatCount="indefinite"/></g>')
     return s
 
 def gql(token, query, variables):
@@ -201,11 +200,12 @@ TROPHY=[
  "...X...",
  "..XXX..",
 ]
+CELL=7                                  # bigger trophies
 
 def draw_trophy(gx, ty, key, val, static=True, glim_begin=None):
     letter,colr=rank_of(key,val)
     lite=_shade(colr,0.30); dark=_shade(colr,-0.25)
-    cell=6; tw=7*cell; ox=gx-tw/2
+    cell=CELL; tw=7*cell; ox=gx-tw/2
     cup=[]
     for r,row in enumerate(TROPHY):
         rowcol = lite if r<2 else (colr if r<4 else dark)
@@ -225,66 +225,74 @@ def draw_trophy(gx, ty, key, val, static=True, glim_begin=None):
                    f'repeatCount="indefinite"/></g>')
     cup.append(f'<rect x="{px(ox-cell)}" y="{px(ty)}" width="{cell}" height="{cell*2}" fill="{dark}"/>')
     cup.append(f'<rect x="{px(ox+tw)}" y="{px(ty)}" width="{cell}" height="{cell*2}" fill="{dark}"/>')
-    cup.append(F.text_svg(letter,'gb',14,gx,ty+2*cell+11,BLACK,anchor='middle')[0])
-    pw=max(tw+4*cell, F.measure(LABELS[key],'gb',8)+14)
+    cup.append(F.text_svg(letter,'gb',16,gx,ty+2*cell+13,BLACK,anchor='middle')[0])
+    pw=max(tw+4*cell, F.measure(LABELS[key],'gb',9)+16)
     pxq=gx-pw/2; pyq=ty+6*cell+3
     edge=_shade(GOLD,-0.35)
-    # black plaque with a thin dark-gold OUTLINE so stacked plaques stay
-    # distinct instead of merging into one polygon
-    cup.append(f'<rect x="{px(pxq)}" y="{px(pyq)}" width="{px(pw)}" height="28" '
+    cup.append(f'<rect x="{px(pxq)}" y="{px(pyq)}" width="{px(pw)}" height="32" '
                f'fill="{BLACK}" stroke="{edge}" stroke-width="2"/>')
     cup.append(f'<rect x="{px(pxq)}" y="{px(pyq)}" width="{px(pw)}" height="3" fill="{edge}"/>')
-    cup.append(F.text_svg(LABELS[key],'gb',8,gx,pyq+13,WHITE,anchor='middle')[0])
-    cup.append(F.text_svg(str(val),'vt',14,gx,pyq+25,WHITE,anchor='middle')[0])
+    cup.append(F.text_svg(LABELS[key],'gb',9,gx,pyq+14,WHITE,anchor='middle')[0])
+    cup.append(F.text_svg(str(val),'vt',16,gx,pyq+28,WHITE,anchor='middle')[0])
     return cup, pw
 
 def trophies(stats, static):
-    """FULLY-overlapping fan in the band's right region (the trophies piece):
-    each card covers part of its neighbour like a real held hand."""
+    """bigger, spread fan in the band's right region. Animated entry: centre
+    card(s) pop first, others fan outward from centre; then glimmer loop."""
     s=[]
     items=TROPHIES_SHOW; n=len(items)
-    ty=IY0+20
-    TH=6*6+3+28
+    ty=IY0+14
+    TH=6*CELL+3+32
     step=30.0/n
     centre=(n-1)/2.0
-    pitch=34                              # FULLY overlapping neighbours
+    pitch=56                             # spread out (still overlapping)
     outer=max(abs(0-centre),abs(n-1-centre))*step
     Rpiv=( (n-1)/2.0*pitch )/max(math.sin(math.radians(outer)),1e-6) if n>1 else 0
-    gxc=(CUTX+IX1)/2                      # centred in the right piece
+    gxc=(529+IX1)/2                      # centred over the pocket column
     pivx, pivy = gxc, ty+TH+Rpiv
     for i,key in enumerate(items):
         tilt=(i-centre)*step
+        d=abs(i-centre)
         cup,_=draw_trophy(gxc,ty,key,stats[key], static=static,
-                          glim_begin=None if static else T_DONE+1.6+i*0.5)
-        inner=f'<g transform="rotate({tilt:.2f} {px(pivx)} {px(pivy)})">{"".join(cup)}</g>'
+                          glim_begin=None if static else T_DONE+2.2+i*0.5)
         if static:
-            s.append(inner)
+            s.append(f'<g transform="rotate({tilt:.2f} {px(pivx)} {px(pivy)})">{"".join(cup)}</g>')
         else:
-            b=T_DONE+0.30+i*0.15
-            s.append(f'<g opacity="0"><set attributeName="opacity" to="1" '
-                     f'begin="{b:.2f}s" fill="freeze"/>{inner}</g>')
+            b=T_DONE+0.35+d*0.25          # centre first, then outward
+            s.append(
+              f'<g opacity="0"><set attributeName="opacity" to="1" '
+              f'begin="{b:.2f}s" fill="freeze"/>'
+              f'<g transform="rotate(0 {px(pivx)} {px(pivy)})">'
+              f'<animateTransform attributeName="transform" type="rotate" '
+              f'values="0 {px(pivx)} {px(pivy)};{tilt:.2f} {px(pivx)} {px(pivy)}" '
+              f'begin="{b:.2f}s" dur="0.45s" calcMode="spline" '
+              f'keySplines="0.2 0.8 0.3 1" fill="freeze"/>'
+              f'{"".join(cup)}</g></g>')
     return s
 
 # ---------------------------------------------------------------- radar ----
 def radar(stats, static):
+    """sequence: empty grid pops (T_GRID) -> first sonar wave (T_SON) paints
+    the polygon (T_POLY) -> resting loop of waves over the static radar."""
     s=[]
     Rmax=120; LS=13
     lext=12+F.measure("REVIEWS",'gb',LS)
     rext=12+F.measure("PRS",'gb',LS)
     cx=(IX0+ARM_X1)/2 + (lext-rext)/2
-    cy=(BAND_IB+ARM_Y1)/2 + 12
+    cy=(IY0+52+ARM_Y1)/2                 # vertically centred in the gold column
     axes=[("COMMITS","commits",(0,-1)),
           ("PRS","prs",(1,0)),
           ("ISSUES","issues",(0,1)),
           ("REVIEWS","reviews",(-1,0))]
+    # grid (rings + axis lines) in RELATIVE coords so it can pop from centre
+    grid=[]
     for k in (0.25,0.5,0.75,1.0):
         r=Rmax*k
-        pts=f"{px(cx)},{px(cy-r)} {px(cx+r)},{px(cy)} {px(cx)},{px(cy+r)} {px(cx-r)},{px(cy)}"
         wd = 3 if k==1.0 else 1.5
-        s.append(f'<polygon points="{pts}" fill="none" stroke="{BLACK}" '
-                 f'stroke-width="{wd}"/>')
-    s.append(f'<line x1="{px(cx)}" y1="{px(cy-Rmax)}" x2="{px(cx)}" y2="{px(cy+Rmax)}" stroke="{BLACK}" stroke-width="1.5"/>')
-    s.append(f'<line x1="{px(cx-Rmax)}" y1="{px(cy)}" x2="{px(cx+Rmax)}" y2="{px(cy)}" stroke="{BLACK}" stroke-width="1.5"/>')
+        grid.append(f'<polygon points="0,{px(-r)} {px(r)},0 0,{px(r)} {px(-r)},0" '
+                    f'fill="none" stroke="{BLACK}" stroke-width="{wd}"/>')
+    grid.append(f'<line x1="0" y1="{px(-Rmax)}" x2="0" y2="{px(Rmax)}" stroke="{BLACK}" stroke-width="1.5"/>')
+    grid.append(f'<line x1="{px(-Rmax)}" y1="0" x2="{px(Rmax)}" y2="0" stroke="{BLACK}" stroke-width="1.5"/>')
     rel=[]
     for _,k,(dx,dy) in axes:
         v=rank_radius(k, stats[k]); r=Rmax*max(v,0.04)
@@ -294,38 +302,45 @@ def radar(stats, static):
           f'stroke="{BLACK}" stroke-width="3"/>')
     dots="".join(f'<rect x="{px(a-4)}" y="{px(b-4)}" width="8" height="8" '
                  f'fill="{WHITE}" stroke="{BLACK}" stroke-width="2"/>' for a,b in rel)
-    if static:
-        s.append(f'<g transform="translate({px(cx)},{px(cy)})">{poly}{dots}</g>')
-    else:
-        t=T_DONE+0.20
-        rd=Rmax
-        sonar=(f'<g><animateTransform attributeName="transform" type="scale" '
-               f'values="0.1;1" dur="3.4s" begin="{T_DONE+1.4:.2f}s" '
-               f'repeatCount="indefinite"/>'
-               f'<polygon points="0,{px(-rd)} {px(rd)},0 0,{px(rd)} {px(-rd)},0" '
-               f'fill="none" stroke="{BLUEB}" stroke-width="4" stroke-opacity="0">'
-               f'<animate attributeName="stroke-opacity" values="0.55;0" '
-               f'dur="3.4s" begin="{T_DONE+1.4:.2f}s" repeatCount="indefinite"/>'
-               f'</polygon></g>')
-        s.append(
-          f'<g transform="translate({px(cx)},{px(cy)})">'
-          f'<g transform="scale(0)">'
-          f'<animateTransform attributeName="transform" type="scale" '
-          f'values="0;1.06;1" keyTimes="0;0.8;1" dur="0.9s" begin="{t:.2f}s" '
-          f'calcMode="spline" keySplines="0.2 0.7 0.3 1;0.4 0 0.6 1" fill="freeze"/>'
-          f'{poly}{dots}</g>{sonar}</g>')
+    labs=[]
     lab=[("COMMITS", cx, cy-Rmax-26, 'middle', stats["commits"], cx, cy-Rmax-8),
          ("PRS",     cx+Rmax+12, cy-12, 'start', stats["prs"], cx+Rmax+12, cy+8),
          ("ISSUES",  cx, cy+Rmax+22, 'middle', stats["issues"], cx, cy+Rmax+40),
          ("REVIEWS", cx-Rmax-12, cy-12, 'end', stats["reviews"], cx-Rmax-12, cy+8)]
     for name,lx,ly,anc,val,vx,vy in lab:
-        s.append(F.text_svg(name,'gb',LS,lx,ly,BLACK,anchor=anc)[0])
-        s.append(F.text_svg(str(val),'vt',18,vx,vy,BLACK,anchor=anc)[0])
+        labs.append(F.text_svg(name,'gb',LS,lx,ly,BLACK,anchor=anc)[0])
+        labs.append(F.text_svg(str(val),'vt',18,vx,vy,BLACK,anchor=anc)[0])
+    if static:
+        s.append(f'<g transform="translate({px(cx)},{px(cy)})">{"".join(grid)}{poly}{dots}</g>')
+        s+=labs
+        return s
+    # 1) empty grid + labels pop
+    s.append(
+      f'<g transform="translate({px(cx)},{px(cy)})">'
+      f'<g transform="scale(0)">'
+      f'<animateTransform attributeName="transform" type="scale" '
+      f'values="0;1.06;1" keyTimes="0;0.8;1" dur="0.55s" begin="{T_GRID:.2f}s" '
+      f'calcMode="spline" keySplines="0.2 0.7 0.3 1;0.4 0 0.6 1" fill="freeze"/>'
+      f'{"".join(grid)}'
+      # 2) data polygon painted by the first wave
+      f'<g opacity="0"><animate attributeName="opacity" values="0;1" '
+      f'dur="0.9s" begin="{T_POLY:.2f}s" fill="freeze"/>{poly}{dots}</g>'
+      # 3) sonar waves, from the first (painting) one onward
+      f'<g><animateTransform attributeName="transform" type="scale" '
+      f'values="0.1;1" dur="3.4s" begin="{T_SON:.2f}s" '
+      f'repeatCount="indefinite"/>'
+      f'<polygon points="0,{px(-Rmax)} {px(Rmax)},0 0,{px(Rmax)} {px(-Rmax)},0" '
+      f'fill="none" stroke="{BLUEB}" stroke-width="4" stroke-opacity="0">'
+      f'<animate attributeName="stroke-opacity" values="0.55;0" '
+      f'dur="3.4s" begin="{T_SON:.2f}s" repeatCount="indefinite"/>'
+      f'</polygon></g>'
+      f'</g></g>')
+    s.append(f'<g opacity="0"><set attributeName="opacity" to="1" '
+             f'begin="{T_GRID:.2f}s" fill="freeze"/>{"".join(labs)}</g>')
     return s
 
 # ----------------------------------------------------------------- main ----
 def compose(stats, static=False):
-    """the FULL L drawing (before cutting)."""
     body=[]
     body+=l_frame()
     body+=corner_prompt(static)
@@ -333,23 +348,21 @@ def compose(stats, static=False):
     body+=radar(stats, static)
     return ''.join(body)
 
-def build(stats, static=False):
-    """left piece: viewBox 0..CUTX, full height. Open right edge at the cut."""
+def build_band(stats, static=False):
     body=compose(stats, static)
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CUTX} {CH}" '
-            f'width="{CUTX}" height="{CH}">{body}</svg>')
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CW} {CUTY}" '
+            f'width="{CW}" height="{CUTY}">{body}</svg>')
 
-def build_trophies(stats, static=False):
-    """right piece: viewBox CUTX..CW, band height. Open left edge at the cut."""
+def build_arm(stats, static=False):
     body=compose(stats, static)
     return (f'<svg xmlns="http://www.w3.org/2000/svg" '
-            f'viewBox="{CUTX} 0 {CW-CUTX} {B_H}" '
-            f'width="{CW-CUTX}" height="{B_H}">{body}</svg>')
+            f'viewBox="0 {CUTY} {ARM_W} {CH-CUTY}" '
+            f'width="{ARM_W}" height="{CH-CUTY}">{body}</svg>')
 
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--user", default=os.environ.get("RADAR_USER","McVarHQ"))
-    ap.add_argument("--out",  default="panel4_radar.svg")
+    ap.add_argument("--out",  default="panel4_band.svg")
     ap.add_argument("--mock", action="store_true")
     ap.add_argument("--static", action="store_true")
     a=ap.parse_args()
@@ -362,13 +375,13 @@ def main():
             stats=MOCK
         else:
             stats=fetch_stats(a.user, token)
-    svg=build(stats, static=a.static)
-    open(a.out,'w').write(svg)
-    t_out=os.path.join(os.path.dirname(a.out) or ".",
-                       os.path.basename(a.out).replace("radar","trophies"))
-    tsvg=build_trophies(stats, static=a.static)
-    open(t_out,'w').write(tsvg)
-    print(f"wrote {a.out} ({len(svg)}B) + {t_out} ({len(tsvg)}B)  stats={stats}")
+    band=build_band(stats, static=a.static)
+    open(a.out,'w').write(band)
+    arm_out=os.path.join(os.path.dirname(a.out) or ".",
+                         os.path.basename(a.out).replace("band","arm"))
+    arm=build_arm(stats, static=a.static)
+    open(arm_out,'w').write(arm)
+    print(f"wrote {a.out} ({len(band)}B) + {arm_out} ({len(arm)}B)  stats={stats}")
 
 if __name__=="__main__":
     main()
