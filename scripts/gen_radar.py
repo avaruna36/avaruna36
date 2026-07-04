@@ -73,7 +73,7 @@ def corner_prompt(static):
     s.append(f'<rect x="{sx}" y="{sy}" width="{big}" height="{big}" fill="{WHITE}"/>')
     sm=round(big*0.57); dg=round(big*0.09)
     s.append(f'<rect x="{sx+big+dg}" y="{sy+big+dg}" width="{sm}" height="{sm}" fill="{WHITE}"/>')
-    fs=27
+    fs=28
     tx=sx+big+22
     ty=sy+big*0.5+fs*0.34
     if static:

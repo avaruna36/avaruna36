@@ -35,11 +35,11 @@ OFF=9; BEV=5; BW=18
 M=6; MT=6; ML=30; MR=22    # minimal top margin (dividers handle spacing)
 PW=865
 COLS,ROWS=53,7
-PITCH=14; CELL=11
-DAY_W=42; MONTH_H=22
+PITCH=15; CELL=13
+DAY_W=34; MONTH_H=24
 GRID_W=COLS*PITCH-(PITCH-CELL)          # 739
 GRID_H=ROWS*PITCH-(PITCH-CELL)          # 95
-PROMPT_H=106; GAP1=32; SCORE_H=42; PADB=8
+PROMPT_H=96; GAP1=32; SCORE_H=42; PADB=8
 IH=PROMPT_H+MONTH_H+GRID_H+GAP1+SCORE_H+PADB
 PH=IH+2*BW
 CW=ML+PW+OFF+MR; CH=MT+PH+OFF+M
@@ -86,7 +86,7 @@ def prompt(static):
     s.append(f'<rect x="{sx}" y="{sy}" width="{big}" height="{big}" fill="{WHITE}"/>')
     sm=round(big*0.57); dg=round(big*0.09)
     s.append(f'<rect x="{sx+big+dg}" y="{sy+big+dg}" width="{sm}" height="{sm}" fill="{WHITE}"/>')
-    fs=25; tx=sx+big+20; ty=sy+big*0.5+fs*0.34
+    fs=26; tx=sx+big+20; ty=sy+big*0.5+fs*0.34
     if static:
         s.append(F.text_svg(PROMPT_TXT,'vt',fs,tx,ty,BLACK)[0])
         return s
@@ -288,7 +288,7 @@ def tail_dot(cx,cy,rad,fill,edge,horiz=False):
     """Nokia snake link: stepped parallelogram (2x4 with two OPPOSITE corners
     removed) with a light/dark bezel outline for texture. Cheap: 6 fill rects
     + 2 bezel polylines."""
-    p=CELL/4.2
+    p=CELL/3.5                              # bigger links, allowed to overflow the cell
     lite=_shade(fill,0.36); dk=_shade(fill,-0.42)
     bmp=[(1,0),(0,1),(1,1),(0,2),(1,2),(0,3)]
     cols,rows=2,4
@@ -394,7 +394,7 @@ def head_layer(frames,static):
     return [
       f'<g opacity="0"><set attributeName="opacity" to="1" begin="{T_POP:.2f}s" fill="freeze"/>'
       f'<g transform="translate({tvals[0].split(",")[0]},{tvals[0].split(",")[1]})">'
-      f'<animateTransform attributeName="transform" type="translate" calcMode="discrete" '
+      f'<animateTransform attributeName="transform" type="translate" calcMode="linear" '
       f'values="{";".join(tvals)}" keyTimes="{";".join(kts)}" '
       f'dur="{T:.2f}s" repeatCount="indefinite"/>'
       f'<g transform="rotate(90)">'
