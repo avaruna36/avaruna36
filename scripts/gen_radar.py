@@ -23,12 +23,12 @@ RED  =P.PALETTE["fireball_red"]
 OFF=9; BEV=5; BW=18
 
 # ------------------------------------------------------------- geometry ----
-M=6; ML=30; MR=22                    # side margins match panels 1/2 art offsets at 808px
+M=6; MT=28; ML=30; MR=22             # MT tuned so gapB == gapA(43px, locked)
 PW,PH = 865,543
 NW,NH = 374,369
-OX,OY = ML,M
+OX,OY = ML,MT
 CW = ML+PW+OFF+MR                    # 926
-CH = M+PH+OFF+M                      # 564 -> arm piece height = 375 = mm canvas
+CH = MT+PH+OFF+M                     # arm piece height stays NH+6 = mm canvas
 CUTY = OY+(PH-NH)+OFF                # 189: horizontal cut (band piece height)
 ARM_W = 532                          # arm piece width (mm right edge lands on band art right)
 
@@ -302,17 +302,35 @@ def radar(stats, static):
           f'stroke="{BLACK}" stroke-width="3"/>')
     dots="".join(f'<rect x="{px(a-4)}" y="{px(b-4)}" width="8" height="8" '
                  f'fill="{WHITE}" stroke="{BLACK}" stroke-width="2"/>' for a,b in rel)
-    labs=[]
-    lab=[("COMMITS", cx, cy-Rmax-26, 'middle', stats["commits"], cx, cy-Rmax-8),
-         ("PRS",     cx+Rmax+12, cy-12, 'start', stats["prs"], cx+Rmax+12, cy+8),
-         ("ISSUES",  cx, cy+Rmax+22, 'middle', stats["issues"], cx, cy+Rmax+40),
-         ("REVIEWS", cx-Rmax-12, cy-12, 'end', stats["reviews"], cx-Rmax-12, cy+8)]
-    for name,lx,ly,anc,val,vx,vy in lab:
+    labs=[]; vals_static=[]; ticks=[]
+    lab=[("COMMITS","commits", cx, cy-Rmax-26, 'middle', cx, cy-Rmax-8),
+         ("PRS","prs",     cx+Rmax+12, cy-12, 'start', cx+Rmax+12, cy+8),
+         ("ISSUES","issues",  cx, cy+Rmax+22, 'middle', cx, cy+Rmax+40),
+         ("REVIEWS","reviews", cx-Rmax-12, cy-12, 'end', cx-Rmax-12, cy+8)]
+    for name,key,lx,ly,anc,vx,vy in lab:
         labs.append(F.text_svg(name,'gb',LS,lx,ly,BLACK,anchor=anc)[0])
-        labs.append(F.text_svg(str(val),'vt',18,vx,vy,BLACK,anchor=anc)[0])
+        N=stats[key]
+        vals_static.append(F.text_svg(str(N),'vt',18,vx,vy,BLACK,anchor=anc)[0])
+        # animated: value TICKS UP from 0 while the wave reveals this axis's
+        # vertex, then freezes at the real number forever
+        vfrac=max(rank_radius(key,N),0.04)
+        t_end=T_SON+3.4*vfrac
+        steps=12
+        seq=[]
+        for i in range(steps+1):
+            v=round(N*i/steps)
+            t=T_SON+(t_end-T_SON)*i/steps
+            if seq and seq[-1][1]==v: continue
+            seq.append((t,v))
+        for j,(t,v) in enumerate(seq):
+            g=F.text_svg(str(v),'vt',18,vx,vy,BLACK,anchor=anc)[0]
+            offs=(f'<set attributeName="opacity" to="0" begin="{seq[j+1][0]:.2f}s" fill="freeze"/>'
+                  if j+1<len(seq) else '')
+            ticks.append(f'<g opacity="0"><set attributeName="opacity" to="1" '
+                         f'begin="{t:.2f}s" fill="freeze"/>{offs}{g}</g>')
     if static:
         s.append(f'<g transform="translate({px(cx)},{px(cy)})">{"".join(grid)}{poly}{dots}</g>')
-        s+=labs
+        s+=labs; s+=vals_static
         return s
     # 1) empty grid + labels pop
     s.append(
@@ -340,6 +358,7 @@ def radar(stats, static):
       f'</g></g>')
     s.append(f'<g opacity="0"><set attributeName="opacity" to="1" '
              f'begin="{T_GRID:.2f}s" fill="freeze"/>{"".join(labs)}</g>')
+    s.append(''.join(ticks))
     return s
 
 # ----------------------------------------------------------------- main ----

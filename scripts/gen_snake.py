@@ -32,7 +32,7 @@ GREENS=[_shade(GREEN,0.42),_shade(GREEN,0.20),GREEN,_shade(GREEN,-0.28)]  # L1..
 REDS  =[_shade(RED,0.35),_shade(RED,0.15),RED,_shade(RED,-0.25)]          # L1..L4
 
 OFF=9; BEV=5; BW=18
-M=6; ML=30; MR=22
+M=6; MT=44; ML=30; MR=22   # MT tuned so gapC == gapA(43px, locked)
 PW=865
 COLS,ROWS=53,7
 PITCH=14; CELL=11
@@ -42,8 +42,8 @@ GRID_H=ROWS*PITCH-(PITCH-CELL)          # 95
 PROMPT_H=106; GAP1=32; SCORE_H=42; PADB=8
 IH=PROMPT_H+MONTH_H+GRID_H+GAP1+SCORE_H+PADB
 PH=IH+2*BW
-CW=ML+PW+OFF+MR; CH=M+PH+OFF+M
-OX,OY=ML,M
+CW=ML+PW+OFF+MR; CH=MT+PH+OFF+M
+OX,OY=ML,MT
 IX0,IY0=OX+BW,OY+BW; IX1=OX+PW-BW
 _inner=PW-2*BW
 GX=IX0+( _inner-(DAY_W+GRID_W) )//2+DAY_W
@@ -285,8 +285,12 @@ def cells_layer(grid,t_eat,t_dep,static):
     return s
 
 def tail_dot(cx,cy,rad,fill,edge):
-    return (f'<circle cx="{px(cx)}" cy="{px(cy)}" r="{px(rad)}" fill="{fill}" '
-            f'stroke="{edge}" stroke-width="1.6"/>')
+    """Nokia-style chain link: hollow rounded square."""
+    h=rad+0.2
+    return (f'<rect x="{px(cx-h)}" y="{px(cy-h)}" width="{px(2*h)}" height="{px(2*h)}" '
+            f'rx="1.5" fill="none" stroke="{edge}" stroke-width="4"/>'
+            f'<rect x="{px(cx-h)}" y="{px(cy-h)}" width="{px(2*h)}" height="{px(2*h)}" '
+            f'rx="1.5" fill="none" stroke="{fill}" stroke-width="2.2"/>')
 
 def tail_layer(cover,static):
     if static: return []
@@ -303,39 +307,71 @@ def tail_layer(cover,static):
                  f'dur="{T:.2f}s" repeatCount="indefinite"/>{d}</g>')
     return s
 
-def python_head():
-    """oval plum python head: eyes + snake spots."""
-    return (f'<ellipse cx="0" cy="0" rx="11" ry="8.5" fill="{PLUM}" '
-            f'stroke="{PL}" stroke-width="2"/>'
-            f'<circle cx="-3.6" cy="-2.6" r="2.4" fill="{WHITE}"/>'
-            f'<circle cx="3.6" cy="-2.6" r="2.4" fill="{WHITE}"/>'
-            f'<circle cx="-3.6" cy="-2.3" r="1.1" fill="{BLACK}"/>'
-            f'<circle cx="3.6" cy="-2.3" r="1.1" fill="{BLACK}"/>'
-            f'<circle cx="-4.5" cy="3.4" r="1.6" fill="{PD}"/>'
-            f'<circle cx="0.5" cy="4.6" r="1.6" fill="{PD}"/>'
-            f'<circle cx="5.2" cy="3.0" r="1.3" fill="{PD}"/>')
+def python_head(animate=False):
+    """pixel-rhombus python head (points +x): stepped diamond body, a lighter
+    top-left facet for 8-bit shading, two eyes, and a red forked tongue that
+    flicks when animate=True."""
+    body=_shade(PLUM,0.0)
+    # stepped diamond outline (chunky 8-bit silhouette), points at +x / -x
+    pts="13,0 9,-3 5,-6 0,-8 -5,-6 -9,-3 -13,0 -9,3 -5,6 0,8 5,6 9,3"
+    facet="0,-8 -5,-6 -9,-3 -13,0 -6,0 0,-4"     # upper-left light facet
+    tongue=('<path d="M13,0 H19 M19,0 L23,-3 M19,0 L23,3" '
+            'fill="none" stroke="'+RED+'" stroke-width="2"'
+            + ('><animate attributeName="d" dur="0.5s" repeatCount="indefinite" '
+               'values="M13,0 H19 M19,0 L23,-3 M19,0 L23,3;'
+               'M13,0 H21 M21,0 L25,-4 M21,0 L25,4;'
+               'M13,0 H19 M19,0 L23,-3 M19,0 L23,3"/></path>'
+               if animate else '/>'))
+    return (f'{tongue}'
+            f'<polygon points="{pts}" fill="{body}" stroke="{PL}" stroke-width="2.4"/>'
+            f'<polygon points="{facet}" fill="{PL}" opacity="0.55"/>'
+            f'<rect x="0.5" y="-4.4" width="4" height="4" fill="{WHITE}"/>'
+            f'<rect x="0.5" y="0.4" width="4" height="4" fill="{WHITE}"/>'
+            f'<rect x="2.3" y="-3.2" width="1.8" height="1.8" fill="{BLACK}"/>'
+            f'<rect x="2.3" y="1.8" width="1.8" height="1.8" fill="{BLACK}"/>')
+
+def head_angles(frames):
+    """travel direction per keyframe: art points +x -> right=0 left=180
+    down=90 up=270."""
+    angs=[]
+    prev=90.0
+    for i in range(len(frames)):
+        if i+1<len(frames):
+            dx=frames[i+1][1]-frames[i][1]; dy=frames[i+1][2]-frames[i][2]
+            if abs(dx)>abs(dy) and abs(dx)>0.5: a=0.0 if dx>0 else 180.0
+            elif abs(dy)>0.5: a=90.0 if dy>0 else 270.0
+            else: a=prev
+        else: a=prev
+        angs.append(a); prev=a
+    return angs
 
 def head_layer(frames,static):
-    HS=16
     if static:
         x,y=frames[0][1],frames[0][2]
-        return [f'<g transform="translate({px(x)},{px(y)})">{python_head()}</g>']
+        return [f'<g transform="translate({px(x)},{px(y)})"><g transform="rotate(90)">{python_head()}</g></g>']
     tvals=[];kts=[]
     for t,x,y in frames:
         tvals.append(f"{px(x)},{px(y)}"); kts.append(f"{kt(t):.5f}")
-    if kts[-1]!="1.00000": tvals.append(tvals[-1]); kts.append("1.00000")
+    angs=head_angles(frames)
+    avals=[f"{a:.0f}" for a in angs]
+    if kts[-1]!="1.00000":
+        tvals.append(tvals[-1]); avals.append(avals[-1]); kts.append("1.00000")
     return [
       f'<g opacity="0"><set attributeName="opacity" to="1" begin="{T_POP:.2f}s" fill="freeze"/>'
       f'<g transform="translate({tvals[0].split(",")[0]},{tvals[0].split(",")[1]})">'
       f'<animateTransform attributeName="transform" type="translate" calcMode="discrete" '
       f'values="{";".join(tvals)}" keyTimes="{";".join(kts)}" '
       f'dur="{T:.2f}s" repeatCount="indefinite"/>'
+      f'<g transform="rotate(90)">'
+      f'<animateTransform attributeName="transform" type="rotate" calcMode="discrete" '
+      f'values="{";".join(avals)}" keyTimes="{";".join(kts)}" '
+      f'dur="{T:.2f}s" repeatCount="indefinite"/>'
       f'<g transform="scale(0)">'
       f'<animateTransform attributeName="transform" type="scale" '
       f'values="0;1.4;0.85;1.1;1" keyTimes="0;0.4;0.65;0.85;1" dur="0.55s" '
       f'begin="{T_POP:.2f}s" fill="freeze"/>'
-      f'{python_head()}'
-      f'</g></g></g>']
+      f'{python_head(animate=True)}'
+      f'</g></g></g></g>']
 
 SCORE_COLORS=[GOLD,RED,CYAN,GREENS[1],IPA,P.PLUM_LIGHT,WHITE]
 def colored_text(txt, size, x, y, ci0=0):
