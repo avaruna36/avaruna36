@@ -32,7 +32,7 @@ GREENS=[_shade(GREEN,0.42),_shade(GREEN,0.20),GREEN,_shade(GREEN,-0.28)]  # L1..
 REDS  =[_shade(RED,0.35),_shade(RED,0.15),RED,_shade(RED,-0.25)]          # L1..L4
 
 OFF=9; BEV=5; BW=18
-M=6; MT=44; ML=30; MR=22   # MT tuned so gapC == gapA(43px, locked)
+M=6; MT=6; ML=30; MR=22    # minimal top margin (dividers handle spacing)
 PW=865
 COLS,ROWS=53,7
 PITCH=14; CELL=11
@@ -285,40 +285,55 @@ def cells_layer(grid,t_eat,t_dep,static):
     return s
 
 def tail_dot(cx,cy,rad,fill,edge,horiz=False):
-    """Nokia snake link: stepped parallelogram (a 2x4 block with two OPPOSITE
-    corners removed). Sized to nearly fill a calendar cell. horiz rotates it."""
-    p=CELL/4.2                             # pixel size (4 rows tall)
-    # vertical bitmap: cols(2) x rows(4), notch top-left + bottom-right
-    #   .X
-    #   XX
-    #   XX
-    #   X.
+    """Nokia snake link: stepped parallelogram (2x4 with two OPPOSITE corners
+    removed) with a light/dark bezel outline for texture. Cheap: 6 fill rects
+    + 2 bezel polylines."""
+    p=CELL/4.2
+    lite=_shade(fill,0.36); dk=_shade(fill,-0.42)
     bmp=[(1,0),(0,1),(1,1),(0,2),(1,2),(0,3)]
     cols,rows=2,4
-    parts=[]
-    if horiz:
-        gw,gh=rows,cols                    # 4 wide x 2 tall
-        ox=cx-(gw*p)/2; oy=cy-(gh*p)/2
-        for (c,r) in bmp:
-            # rotate 90deg: (c,r)->(r, cols-1-c)
-            nc,nr=r,(cols-1-c)
-            parts.append(f'<rect x="{px(ox+nc*p)}" y="{px(oy+nr*p)}" width="{px(p+0.4)}" height="{px(p+0.4)}" fill="{fill}"/>')
-    else:
-        ox=cx-(cols*p)/2; oy=cy-(rows*p)/2
-        for (c,r) in bmp:
-            parts.append(f'<rect x="{px(ox+c*p)}" y="{px(oy+r*p)}" width="{px(p+0.4)}" height="{px(p+0.4)}" fill="{fill}"/>')
-    return ''.join(parts)
+    def coords(c,r):
+        if horiz: return (r,(cols-1-c))
+        return (c,r)
+    ox=cx-((rows if horiz else cols)*p)/2
+    oy=cy-((cols if horiz else rows)*p)/2
+    q=p+0.4
+    rects=[]
+    occ=set()
+    for (c,r) in bmp:
+        nc,nr=coords(c,r); occ.add((nc,nr))
+        rects.append(f'<rect x="{px(ox+nc*p)}" y="{px(oy+nr*p)}" width="{px(q)}" height="{px(q)}" fill="{fill}"/>')
+    # bezel: light on top+left exposed edges, dark on bottom+right exposed edges
+    lite_seg=[]; dk_seg=[]
+    for (nc,nr) in occ:
+        x=ox+nc*p; y=oy+nr*p
+        if (nc,nr-1) not in occ: lite_seg.append(f'M{px(x)},{px(y)} h{px(q)}')      # top
+        if (nc-1,nr) not in occ: lite_seg.append(f'M{px(x)},{px(y)} v{px(q)}')      # left
+        if (nc,nr+1) not in occ: dk_seg.append(f'M{px(x)},{px(y+q)} h{px(q)}')      # bottom
+        if (nc+1,nr) not in occ: dk_seg.append(f'M{px(x+q)},{px(y)} v{px(q)}')      # right
+    b=(f'<path d="{" ".join(lite_seg)}" stroke="{lite}" stroke-width="1.6" fill="none"/>'
+       f'<path d="{" ".join(dk_seg)}" stroke="{dk}" stroke-width="1.6" fill="none"/>')
+    return ''.join(rects)+b
 
 def tail_layer(cover,static):
     if static: return []
-    s=[]; edge=_shade(GREEN,-0.45)
+    s=[]
+    # map each cell to its predecessor/successor in the path to know orientation
+    path=build_path(); idx={c:i for i,c in enumerate(path)}
     for cell,ivs in cover.items():
         if not ivs: continue
         c,r=cell
         x,y=cell_xy(c,r)
-        # snake moves horizontally along each serpentine row -> links lie
-        # horizontal; the rare vertical drop cell gets a vertical link
-        d=tail_dot(x+CELL/2,y+CELL/2,4.3,GREEN,edge,horiz=True)
+        i=idx[cell]
+        prevc=path[i-1] if i>0 else cell
+        nextc=path[i+1] if i+1<len(path) else cell
+        # horizontal unless this cell is a row-turn (col unchanged between
+        # neighbours) -> then it's the vertical drop link
+        turn = (prevc[0]==cell[0]==nextc[0]) or (prevc[1]!=nextc[1] and prevc[0]==cell[0])
+        horiz = not (cell[0]==prevc[0] and cell[0]==nextc[0] or cell[0]==nextc[0])
+        # simpler: vertical only when the successor is directly below (drop)
+        vertical = (nextc[0]==cell[0] and nextc[1]!=cell[1]) or (prevc[0]==cell[0] and prevc[1]!=cell[1])
+        d=tail_dot(x+CELL/2,y+CELL/2,4.3,GREEN,None,horiz=not vertical)
         vals=["0"]; kts=["0"]
         for a,b in ivs:
             vals+=["1","0"]; kts+=[f"{kt(a):.5f}",f"{kt(b):.5f}"]

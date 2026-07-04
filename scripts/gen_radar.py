@@ -23,7 +23,7 @@ RED  =P.PALETTE["fireball_red"]
 OFF=9; BEV=5; BW=18
 
 # ------------------------------------------------------------- geometry ----
-M=6; MT=28; ML=30; MR=22             # MT tuned so gapB == gapA(43px, locked)
+M=6; MT=6; ML=30; MR=22              # minimal top margin (dividers handle spacing)
 PW,PH = 865,543
 NW,NH = 374,369
 OX,OY = ML,MT

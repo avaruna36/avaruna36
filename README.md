@@ -8,7 +8,7 @@
 </p>
 
 <p>
-  <img src="./divider.svg" alt="" width="808">
+  <img src="./divider1.svg" alt="" width="808">
 </p>
 
 <p>
@@ -16,7 +16,7 @@
 </p>
 
 <p>
-  <img src="./divider.svg" alt="" width="808">
+  <img src="./divider2.svg" alt="" width="808">
 </p>
 
 <!-- prettier-ignore -->
@@ -26,7 +26,7 @@
 <br clear="both"/>
 
 <p>
-  <img src="./divider.svg" alt="" width="808">
+  <img src="./divider3.svg" alt="" width="808">
 </p>
 
 <p>
