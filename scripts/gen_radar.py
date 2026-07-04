@@ -322,9 +322,12 @@ def radar(stats, static):
       f'values="0;1.06;1" keyTimes="0;0.8;1" dur="0.55s" begin="{T_GRID:.2f}s" '
       f'calcMode="spline" keySplines="0.2 0.7 0.3 1;0.4 0 0.6 1" fill="freeze"/>'
       f'{"".join(grid)}'
-      # 2) data polygon painted by the first wave
-      f'<g opacity="0"><animate attributeName="opacity" values="0;1" '
-      f'dur="0.9s" begin="{T_POLY:.2f}s" fill="freeze"/>{poly}{dots}</g>'
+      # 2) data polygon GROWS with the first sonar wave: same begin+duration,
+      #    so its vertices ride just inside the expanding wavefront
+      f'<g transform="scale(0)">'
+      f'<animateTransform attributeName="transform" type="scale" '
+      f'values="0;1" dur="3.4s" begin="{T_SON:.2f}s" fill="freeze"/>'
+      f'{poly}{dots}</g>'
       # 3) sonar waves, from the first (painting) one onward
       f'<g><animateTransform attributeName="transform" type="scale" '
       f'values="0.1;1" dur="3.4s" begin="{T_SON:.2f}s" '

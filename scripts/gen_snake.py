@@ -29,6 +29,7 @@ def _shade(hexc,f):
 CELL_EMPTY=_shade(MAROON,0.22)          # muted mauve empties (quieter than gray)
 SCREEN=_shade(MAROON,-0.30)             # inset screen behind the calendar
 GREENS=[_shade(GREEN,0.42),_shade(GREEN,0.20),GREEN,_shade(GREEN,-0.28)]  # L1..L4
+REDS  =[_shade(RED,0.35),_shade(RED,0.15),RED,_shade(RED,-0.25)]          # L1..L4
 
 OFF=9; BEV=5; BW=18
 M=6; ML=30; MR=22
@@ -38,7 +39,7 @@ PITCH=14; CELL=11
 DAY_W=42; MONTH_H=22
 GRID_W=COLS*PITCH-(PITCH-CELL)          # 739
 GRID_H=ROWS*PITCH-(PITCH-CELL)          # 95
-PROMPT_H=84; GAP1=32; SCORE_H=48; PADB=24
+PROMPT_H=106; GAP1=32; SCORE_H=42; PADB=8
 IH=PROMPT_H+MONTH_H+GRID_H+GAP1+SCORE_H+PADB
 PH=IH+2*BW
 CW=ML+PW+OFF+MR; CH=M+PH+OFF+M
@@ -236,20 +237,19 @@ MONTHS=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
 
 def screen_and_labels(grid):
     s=[]
-    sx0=GX-DAY_W-12; sy0=GY-MONTH_H-12
-    sx1=GX+GRID_W+12; sy1=GY+GRID_H+14
-    s.append(f'<rect x="{sx0}" y="{sy0}" width="{sx1-sx0}" height="{sy1-sy0}" '
-             f'fill="{SCREEN}" stroke="{PD}" stroke-width="3"/>')
-    # month labels: first column whose row-0 day enters a new month
-    seen=None
+    # month labels: first column entering a new month; skip labels that would
+    # crowd the previous one (fixes the JUN/JUL pile-up at the left edge)
+    seen=None; last_c=-99
     for c in range(COLS):
         d=grid[c][0][1]
         if not d: continue
         mo=int(d[5:7])
         if mo!=seen:
             seen=mo
-            x,_=cell_xy(c,0)
-            s.append(F.text_svg(MONTHS[mo-1],'gb',8,x,GY-9,PL,anchor='start')[0])
+            if c-last_c>=4:
+                x,_=cell_xy(c,0)
+                s.append(F.text_svg(MONTHS[mo-1],'gb',8,x,GY-9,PL,anchor='start')[0])
+                last_c=c
     # day labels
     for r,name in [(1,"MON"),(3,"WED"),(5,"FRI")]:
         _,y=cell_xy(0,r)
@@ -268,14 +268,15 @@ def cells_layer(grid,t_eat,t_dep,static):
             if cnt<=0:
                 s.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" fill="{CELL_EMPTY}">{title}</rect>')
             else:
-                col=GREENS[green_level(nz,cnt)]
+                lvl=green_level(nz,cnt)
+                col=GREENS[lvl]; rcol=REDS[lvl]
                 if static:
                     s.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" fill="{col}">{title}</rect>')
                 else:
                     te=t_eat[(c,r)]; td=t_dep[(c,r)]
                     s.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" fill="{col}">{title}'
                              f'<animate attributeName="fill" calcMode="discrete" '
-                             f'values="{col};{RED};{col}" '
+                             f'values="{col};{rcol};{col}" '
                              f'keyTimes="0;{kt(te):.5f};{kt(td):.5f}" '
                              f'dur="{T:.2f}s" repeatCount="indefinite"/></rect>')
             # translucent pixel bevel (works over any fill state)
@@ -302,11 +303,23 @@ def tail_layer(cover,static):
                  f'dur="{T:.2f}s" repeatCount="indefinite"/>{d}</g>')
     return s
 
+def python_head():
+    """oval plum python head: eyes + snake spots."""
+    return (f'<ellipse cx="0" cy="0" rx="11" ry="8.5" fill="{PLUM}" '
+            f'stroke="{PL}" stroke-width="2"/>'
+            f'<circle cx="-3.6" cy="-2.6" r="2.4" fill="{WHITE}"/>'
+            f'<circle cx="3.6" cy="-2.6" r="2.4" fill="{WHITE}"/>'
+            f'<circle cx="-3.6" cy="-2.3" r="1.1" fill="{BLACK}"/>'
+            f'<circle cx="3.6" cy="-2.3" r="1.1" fill="{BLACK}"/>'
+            f'<circle cx="-4.5" cy="3.4" r="1.6" fill="{PD}"/>'
+            f'<circle cx="0.5" cy="4.6" r="1.6" fill="{PD}"/>'
+            f'<circle cx="5.2" cy="3.0" r="1.3" fill="{PD}"/>')
+
 def head_layer(frames,static):
     HS=16
     if static:
         x,y=frames[0][1],frames[0][2]
-        return [f'<rect x="{px(x-HS/2)}" y="{px(y-HS/2)}" width="{HS}" height="{HS}" fill="{PLUM}" stroke="{PL}" stroke-width="2"/>']
+        return [f'<g transform="translate({px(x)},{px(y)})">{python_head()}</g>']
     tvals=[];kts=[]
     for t,x,y in frames:
         tvals.append(f"{px(x)},{px(y)}"); kts.append(f"{kt(t):.5f}")
@@ -321,8 +334,7 @@ def head_layer(frames,static):
       f'<animateTransform attributeName="transform" type="scale" '
       f'values="0;1.4;0.85;1.1;1" keyTimes="0;0.4;0.65;0.85;1" dur="0.55s" '
       f'begin="{T_POP:.2f}s" fill="freeze"/>'
-      f'<rect x="{-HS/2}" y="{-HS/2}" width="{HS}" height="{HS}" fill="{PLUM}" '
-      f'stroke="{PL}" stroke-width="2"/>'
+      f'{python_head()}'
       f'</g></g></g>']
 
 SCORE_COLORS=[GOLD,RED,CYAN,GREENS[1],IPA,P.PLUM_LIGHT,WHITE]
@@ -383,13 +395,18 @@ def score_layer(sc,total,static):
     hs_txt=f"HIGHSCORE! : {total}"
     hw=F.measure(hs_txt,'gb',size)
     hx=CXC-hw/2
-    grad=(f'<linearGradient id="hsgrad" x1="0" y1="0" x2="{px(hw)}" y2="0" '
-          f'gradientUnits="userSpaceOnUse" spreadMethod="repeat">'
-          f'<stop offset="0" stop-color="{GOLD}"/><stop offset="0.25" stop-color="{RED}"/>'
-          f'<stop offset="0.5" stop-color="{CYAN}"/><stop offset="0.75" stop-color="{GREENS[1]}"/>'
-          f'<stop offset="1" stop-color="{GOLD}"/>'
-          f'<animateTransform attributeName="gradientTransform" type="translate" '
-          f'values="0,0;{px(hw)},0" dur="1.2s" repeatCount="indefinite"/>'
+    # vertical arcade gradient (top->bottom, like classic HIGH SCORE screens),
+    # whose two ends BREATHE through the palette out of phase (RGB-keyboard feel)
+    cyc_top=f"{GOLD};{RED};{CYAN};{GREENS[1]};{GOLD}"
+    cyc_bot=f"{RED};{CYAN};{GREENS[1]};{GOLD};{RED}"
+    grad=(f'<linearGradient id="hsgrad" x1="0" y1="{px(by-size)}" x2="0" y2="{px(by+4)}" '
+          f'gradientUnits="userSpaceOnUse">'
+          f'<stop offset="0" stop-color="{GOLD}">'
+          f'<animate attributeName="stop-color" values="{cyc_top}" dur="2.6s" '
+          f'repeatCount="indefinite"/></stop>'
+          f'<stop offset="1" stop-color="{RED}">'
+          f'<animate attributeName="stop-color" values="{cyc_bot}" dur="2.6s" '
+          f'repeatCount="indefinite"/></stop>'
           f'</linearGradient>')
     hg=F.text_svg(hs_txt,'gb',size,hx,by,'url(#hsgrad)')[0]
     blink=[]; t=T_FLASH0; on=True

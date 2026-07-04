@@ -1,10 +1,6 @@
 <!--
   McVarHQ / VAROON profile README
-  Panel 1 (header) + Panel 2 (tech-stack wheel): animated SVGs.
-  Panel 4 (radar + trophies + more(me)): L-mosaic.
-  Panel 6 (snake eats the contribution calendar).
-  panel4_band/arm + panel6_snake regenerated DAILY (03:17 UTC)
-  by .github/workflows/radar.yml
+  Panels regenerated DAILY (03:17 UTC) by .github/workflows/radar.yml
 -->
 
 <!-- ===================== PANEL 1: HEADER ===================== -->
