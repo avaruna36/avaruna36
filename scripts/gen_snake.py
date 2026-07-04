@@ -284,21 +284,41 @@ def cells_layer(grid,t_eat,t_dep,static):
             s.append(f'<path d="M{x},{y+CELL} H{x+CELL} V{y}" fill="none" stroke="#000000" stroke-opacity="0.28" stroke-width="1.6"/>')
     return s
 
-def tail_dot(cx,cy,rad,fill,edge):
-    """Nokia-style chain link: hollow rounded square."""
-    h=rad+0.2
-    return (f'<rect x="{px(cx-h)}" y="{px(cy-h)}" width="{px(2*h)}" height="{px(2*h)}" '
-            f'rx="1.5" fill="none" stroke="{edge}" stroke-width="4"/>'
-            f'<rect x="{px(cx-h)}" y="{px(cy-h)}" width="{px(2*h)}" height="{px(2*h)}" '
-            f'rx="1.5" fill="none" stroke="{fill}" stroke-width="2.2"/>')
+def tail_dot(cx,cy,rad,fill,edge,horiz=False):
+    """Nokia snake link: stepped parallelogram (a 2x4 block with two OPPOSITE
+    corners removed). Sized to nearly fill a calendar cell. horiz rotates it."""
+    p=CELL/4.2                             # pixel size (4 rows tall)
+    # vertical bitmap: cols(2) x rows(4), notch top-left + bottom-right
+    #   .X
+    #   XX
+    #   XX
+    #   X.
+    bmp=[(1,0),(0,1),(1,1),(0,2),(1,2),(0,3)]
+    cols,rows=2,4
+    parts=[]
+    if horiz:
+        gw,gh=rows,cols                    # 4 wide x 2 tall
+        ox=cx-(gw*p)/2; oy=cy-(gh*p)/2
+        for (c,r) in bmp:
+            # rotate 90deg: (c,r)->(r, cols-1-c)
+            nc,nr=r,(cols-1-c)
+            parts.append(f'<rect x="{px(ox+nc*p)}" y="{px(oy+nr*p)}" width="{px(p+0.4)}" height="{px(p+0.4)}" fill="{fill}"/>')
+    else:
+        ox=cx-(cols*p)/2; oy=cy-(rows*p)/2
+        for (c,r) in bmp:
+            parts.append(f'<rect x="{px(ox+c*p)}" y="{px(oy+r*p)}" width="{px(p+0.4)}" height="{px(p+0.4)}" fill="{fill}"/>')
+    return ''.join(parts)
 
 def tail_layer(cover,static):
     if static: return []
     s=[]; edge=_shade(GREEN,-0.45)
     for cell,ivs in cover.items():
         if not ivs: continue
-        x,y=cell_xy(*cell)
-        d=tail_dot(x+CELL/2,y+CELL/2,4.3,GREEN,edge)
+        c,r=cell
+        x,y=cell_xy(c,r)
+        # snake moves horizontally along each serpentine row -> links lie
+        # horizontal; the rare vertical drop cell gets a vertical link
+        d=tail_dot(x+CELL/2,y+CELL/2,4.3,GREEN,edge,horiz=True)
         vals=["0"]; kts=["0"]
         for a,b in ivs:
             vals+=["1","0"]; kts+=[f"{kt(a):.5f}",f"{kt(b):.5f}"]
