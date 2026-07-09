@@ -35,8 +35,8 @@ OFF=9; BEV=5; BW=18
 M=6; MT=6; ML=30; MR=22    # minimal top margin (dividers handle spacing)
 PW=865
 COLS,ROWS=53,7
-PITCH=15; CELL=13
-DAY_W=34; MONTH_H=24
+PITCH=14; CELL=12
+DAY_W=40; MONTH_H=24
 GRID_W=COLS*PITCH-(PITCH-CELL)          # 739
 GRID_H=ROWS*PITCH-(PITCH-CELL)          # 95
 PROMPT_H=96; GAP1=32; SCORE_H=42; PADB=8
@@ -69,6 +69,7 @@ T_REND=T_R0+(N_STEPS-1)*DT_R
 T=T_REND+0.7
 
 def px(v): return f"{v:.1f}"
+_SIM={'Lf':[0]*(COLS*ROWS),'Lr':[0]*(COLS*ROWS)}
 def kt(t): return max(0.0,min(1.0,t/T))
 
 def frame():
@@ -113,7 +114,7 @@ def mock_calendar(seed=7):
         col=[]
         for r in range(ROWS):
             d=start+datetime.timedelta(days=c*7+r)
-            cnt = rnd.choice([0,0,0,0,1,1,2,2,3,4,5,6,8,11]) if rnd.random()<0.55 else 0
+            cnt = rnd.choice([1,1,2,2,3,4,5,6,8,11])
             col.append((cnt, d.isoformat()))
         grid.append(col)
     return grid
@@ -159,78 +160,183 @@ def green_level(counts_nonzero, cnt):
 
 # ---- serpentine + simulation -------------------------------------------------
 def build_path():
+    """Serpentine over the calendar, with an OFF-GRID 'mid' tile beside each
+    row-end turn (in the margin just past the edge). Returns (c,r,kind) with
+    kind in {'cell','mid'}; 'mid' tiles are path-only, not calendar cells."""
     path=[]
     for r in range(ROWS):
         cols=range(COLS) if r%2==0 else range(COLS-1,-1,-1)
-        for c in cols: path.append((c,r))
+        for c in cols: path.append((c,r,'cell'))
+        if r<ROWS-1:
+            if r%2==0: path.append((COLS,   r,'mid'))   # turn at right edge
+            else:      path.append((-1,     r,'mid'))   # turn at left edge
     return path
 
-def cell_xy(c,r):
+def cell_xy(c,r,kind='cell'):
+    if kind=='mid':
+        # off-grid tile just past the edge, vertically between rows r and r+1.
+        # Placed so the T's inward-pointing LEG touches the adjacent cell (gap 0).
+        # turn_link builds mids on a 2-col grid (leg col is the inner one); with
+        # unit u=CELL/6 the leg's inner edge sits at cx -/+ u, so offset by u.
+        u=CELL/6.0
+        if c>=COLS: x=GX+(COLS-1)*PITCH+CELL+u    # right edge: cell outer border + u
+        else:       x=GX-u                          # left edge: cell left border - u
+        return x, GY+r*PITCH+PITCH*0.5
     return GX+c*PITCH, GY+r*PITCH
 
+# ---- parking route below the calendar (used during the U-turn reset) --------
+# The whole snake drives off the last cell into serpentine parking lanes below
+# the grid; overflow is clipped behind the panel. Returns a list of (x,y)
+# CENTRES (not cell indices) forming the exit + zig-zag + up-ramp back to start.
+def park_route():
+    """(driveoff, upramp): driveoff = exit drop + serpentine lanes below that
+    hold the whole snake (overflow clipped behind panel); upramp = left-column
+    climb back to the start cell."""
+    drive=[]; up=[]
+    lastx,lasty=cell_xy(COLS-1,ROWS-1); lastx+=CELL/2; lasty+=CELL/2
+    startx,starty=cell_xy(0,0); startx+=CELL/2; starty+=CELL/2
+    xL,xR=startx,lastx
+    baseY=GY+GRID_H+PITCH*0.9
+    # 1) drop down out of the last cell
+    y=lasty
+    while y<baseY:
+        y+=PITCH; drive.append((lastx,min(y,baseY)))
+    # 2) serpentine lanes (enough to hold >= N_STEPS links; clipped below panel)
+    lanes=8
+    for ln in range(lanes):
+        yy=baseY+ln*PITCH
+        if ln%2==0:
+            x=xR
+            while x>xL: x-=PITCH; drive.append((max(x,xL),yy))
+        else:
+            x=xL
+            while x<xR: x+=PITCH; drive.append((min(x,xR),yy))
+        if ln<lanes-1: drive.append((drive[-1][0],yy+PITCH))
+    # 3) up-ramp: climb the far-left column back up to the start cell
+    xUp=startx; y=drive[-1][1]
+    while y>starty:
+        y-=PITCH; up.append((xUp,max(y,starty)))
+    return drive, up
+
+# reset = whole-snake retrace over the full path
+_NPATH=len(build_path())
+T_REND=T_R0+(_NPATH-1)*DT_R
+T=T_REND+0.7
+
 def simulate(grid):
-    path=build_path()
-    counts={ (c,r):grid[c][r][0] for c in range(COLS) for r in range(ROWS) }
-    greens={cell for cell,v in counts.items() if v>0}
-    t_eat={}; L=0; Lf=[0]*N_STEPS
-    for k,cell in enumerate(path):
-        if cell in greens:
-            t_eat[cell]=T_F0+k*DT_F; L+=1
-        Lf[k]=L
-    seg_total=L
-    t_dep={}; Lr=[0]*N_STEPS
-    L=seg_total
-    for m in range(N_STEPS):
-        h=N_STEPS-1-m; cell=path[h]
-        if cell in greens:
-            t_dep[cell]=T_R0+m*DT_R; L-=1
-        Lr[h]=L
-    # head keyframes: spawn ABOVE the calendar (above col 1, clear of the
-    # corner squares), pop, then hop diagonally into the first cell
-    c0=cell_xy(*path[0]); c1=cell_xy(1,0)
+    """Fold-tail with TAPER: THICK NECK at the head (folded core), THIN TAIL of the
+    newest appends. On each fold the body drops to HALF and the surviving core steps
+    +1/6 thicker (up to 3x after 12 folds); the far tail is trimmed as the whole
+    snake marches forward. The snake GROWS ONLY WHEN IT EATS FOOD, so sparse boards
+    give a shorter/thinner/less-folded snake. Reset = the whole intact snake retraces
+    its own path backward, re-greening each cell in reverse-eat order."""
+    path=build_path()                                   # (c,r,kind) incl mids
+    NC=len(path)
+    HALF=COLS//2
+    counts={}
+    for c in range(COLS):
+        for r in range(ROWS): counts[(c,r)]=grid[c][r][0]
+    def cnt_at(i):
+        c,r,k=path[i]; return counts.get((c,r),0) if k=='cell' else 0
+    # ---- fold schedule: the snake GROWS ONLY WHEN IT EATS FOOD (a cell with
+    # contributions). It still moves through empty cells, but its length holds, so
+    # the whole body just translates forward (tail recedes) over empty stretches.
+    Lvis=[0]*NC; length=0; folds=[0]*NC; f=0
+    lastfold=[-1]*NC; lf=-1
+    for k in range(NC):
+        if cnt_at(k)>0: length+=1                          # grow only on food
+        if length>COLS:
+            length=HALF; f+=1; lf=k
+        Lvis[k]=max(length,1); folds[k]=f; lastfold[k]=lf   # >=1 so the head always shows
+    BASE=3.0                                           # BOLD: 1x link = 1 cell tall
+    INC=BASE/6.0                                       # 3x core = 3 cells (overflows rows)
+    total_thick=BASE+folds[-1]*INC
+    # thickness: the head end carries the folded CORE (thick, up to 3x); the newest
+    # tiles append at the TAIL-END and stay thin (BASE) -> THICK NECK, THIN TAIL.
+    # Within the window ending at the head k, the 26 tiles nearest the head are the
+    # core; anything farther back (a newer append) is thin. Right after a fold the
+    # whole body is 26 tiles => all core => all thick.
+    def th_of(i,k):
+        return (BASE+folds[k]*INC) if (k-i) < HALF else BASE
+    # ---- eat / deposit times (cells only) ----
+    t_eat={}; t_dep={}
+    for k in range(NC):
+        c,r,kind=path[k]
+        if kind=='cell': t_eat[(c,r)]=T_F0+k*DT_F
+    # reset retrace: head at path[NC-1-m]; cell re-greens when head passes it
+    for m in range(NC):
+        k=NC-1-m; c,r,kind=path[k]
+        if kind=='cell': t_dep[(c,r)]=T_R0+m*DT_R
+    # ---- per-tile cover with taper thickness ----
+    cover=[[] for _ in range(NC)]
+    for k in range(NC):                                 # forward
+        t0=T_F0+k*DT_F; t1=t0+DT_F
+        for i in range(max(0,k-Lvis[k]+1), k+1):
+            cover[i].append((t0,t1,th_of(i,k)))
+    # flash hold: freeze EXACTLY the final forward frame. First truncate any
+    # forward interval that would spill past T_FEND, then lay down one clean
+    # interval per body tile at its final thickness. This prevents thin/thick
+    # sliver flicker (which read as the body splitting) during the highscore hold.
+    Lf=Lvis[NC-1]
+    lo=max(0,(NC-1)-Lf+1)
+    hold_tiles=set(range(lo,NC))
+    for i in range(NC):
+        newivs=[]
+        for (a,b,th) in cover[i]:
+            if a>=T_FEND: continue                       # drop stray post-eat intervals
+            if b>T_FEND: b=T_FEND                          # clip to the freeze point
+            if b>a: newivs.append((a,b,th))
+        cover[i]=newivs
+    for i in hold_tiles:                                   # one clean hold interval
+        cover[i].append((T_FEND,T_R0,th_of(i,NC-1)))
+    for m in range(NC):                                 # retrace/deposit
+        k=NC-1-m                                          # head retreats to k
+        t0=T_R0+m*DT_R; t1=t0+DT_R
+        # body extends FORWARD of the retreating head (not-yet-deposited part)
+        for i in range(k, min(NC, k+Lvis[k])):
+            cover[i].append((t0,t1,th_of(i,k)))
+    merged=[]
+    for ivs in cover:
+        if not ivs: merged.append([]); continue
+        ivs.sort()
+        out=[list(ivs[0])]
+        for a,b,th in ivs[1:]:
+            if a<=out[-1][1]+1e-6 and abs(th-out[-1][2])<1e-9:
+                out[-1][1]=max(out[-1][1],b)          # same thickness -> merge
+            else:
+                # different thickness: if the new interval starts before the last
+                # one ends, clip the last one so intervals never overlap (keeps the
+                # opacity/scale keyTimes strictly monotonic).
+                if a < out[-1][1]:
+                    out[-1][1]=a
+                if b>a: out.append([a,b,th])
+        # drop any zero/negative-length slivers left by clipping
+        out=[iv for iv in out if iv[1]-iv[0]>1e-6]
+        merged.append([(a,b,th) for a,b,th in out])
+    # ---- head frames: forward, hold, then retrace backward to start ----
+    def P(i):
+        c,r,k=path[i]; x,y=cell_xy(c,r,k)
+        return (x+CELL/2, y+CELL/2) if k=='cell' else (x,y)
+    c0=cell_xy(*build_path()[0][:2]); c1=cell_xy(1,0)
     spawn=(c1[0]+CELL/2+PITCH, GY-MONTH_H-26)
     mid  =(c0[0]+CELL/2+PITCH*0.5, GY-12)
-    home =(c0[0]+CELL/2, c0[1]+CELL/2)
-    frames=[(0.0,*spawn),(T_HOP,*mid),(T_HOP+0.28,*home)]
-    for k,cell in enumerate(path):
-        x,y=cell_xy(*cell)
-        frames.append((T_F0+k*DT_F, x+CELL/2, y+CELL/2))
-    xe,ye=cell_xy(*path[-1])
-    frames.append((T_R0-0.01, xe+CELL/2, ye+CELL/2))
-    for m in range(N_STEPS):
-        h=N_STEPS-1-m; x,y=cell_xy(*path[h])
-        frames.append((T_R0+m*DT_R, x+CELL/2, y+CELL/2))
+    frames=[(0.0,*spawn),(T_HOP,*mid),(T_HOP+0.28, *P(0))]
+    for k in range(NC): frames.append((T_F0+k*DT_F, *P(k)))
+    for m in range(NC): frames.append((T_R0+m*DT_R, *P(NC-1-m)))
     frames.append((T-0.01,*spawn))
-    # tail cover
-    cover_raw={cell:[] for cell in path}
-    def add(cell,a,b): cover_raw[cell].append((a,b))
-    for k in range(N_STEPS):
-        t0=T_F0+k*DT_F
-        for i in range(max(0,k-Lf[k]),k):
-            add(path[i],t0,t0+DT_F)
-    for i in range(max(0,N_STEPS-1-seg_total),N_STEPS-1):
-        add(path[i],T_FEND,T_R0)
-    for m in range(N_STEPS):
-        h=N_STEPS-1-m; t0=T_R0+m*DT_R
-        for i in range(h+1,min(N_STEPS,h+1+Lr[h])):
-            add(path[i],t0,t0+DT_R)
-    cover={}
-    for cell,ivs in cover_raw.items():
-        if not ivs: cover[cell]=[]; continue
-        ivs.sort(); merged=[list(ivs[0])]
-        for a,b in ivs[1:]:
-            if a<=merged[-1][1]+1e-6: merged[-1][1]=max(merged[-1][1],b)
-            else: merged.append([a,b])
-        cover[cell]=[(a,b) for a,b in merged]
-    # score = SUM of contribution counts eaten
+    # ---- score ----
     sc=[(0.0,0)]
-    for k,cell in enumerate(path):
-        if cell in greens: sc.append((T_F0+k*DT_F, sc[-1][1]+counts[cell]))
-    for m in range(N_STEPS):
-        h=N_STEPS-1-m; cell=path[h]
-        if cell in greens: sc.append((T_R0+m*DT_R, sc[-1][1]-counts[cell]))
-    total=sum(counts[c] for c in greens)
-    return path,t_eat,t_dep,frames,cover,sc,total
+    for k in range(NC): sc.append((T_F0+k*DT_F, sc[-1][1]+cnt_at(k)))
+    total=sc[-1][1]; running=total
+    for m in range(NC):
+        running-=cnt_at(NC-1-m); sc.append((T_R0+m*DT_R, running))
+    sc.sort()
+    global _SIM
+    _SIM={'Lvis':Lvis,'folds':folds,'cover':merged,'path':path,'total_thick':total_thick,'BASE':BASE}
+    return path,t_eat,t_dep,frames,merged,sc,total
+
+
+
 
 # ---- layers ------------------------------------------------------------------
 MONTHS=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
@@ -284,81 +390,166 @@ def cells_layer(grid,t_eat,t_dep,static):
             s.append(f'<path d="M{x},{y+CELL} H{x+CELL} V{y}" fill="none" stroke="#000000" stroke-opacity="0.28" stroke-width="1.6"/>')
     return s
 
-def tail_dot(cx,cy,rad,fill,edge,horiz=False):
-    """Nokia snake link: stepped parallelogram (2x4 with two OPPOSITE corners
-    removed) with a light/dark bezel outline for texture. Cheap: 6 fill rects
-    + 2 bezel polylines."""
-    p=CELL/3.5                              # bigger links, allowed to overflow the cell
-    lite=_shade(fill,0.36); dk=_shade(fill,-0.42)
-    bmp=[(1,0),(0,1),(1,1),(0,2),(1,2),(0,3)]
-    cols,rows=2,4
-    def coords(c,r):
-        if horiz: return (r,(cols-1-c))
-        return (c,r)
-    ox=cx-((rows if horiz else cols)*p)/2
-    oy=cy-((cols if horiz else rows)*p)/2
-    q=p+0.4
+def _bevel_outline(cells, u, ox, oy, fill):
+    """Given a set of (col,row) filled unit-cells, emit ONE filled silhouette
+    (union of cells) with a light/dark bevel on the OUTER outline only, so the
+    whole thing reads as a single shape."""
+    occ=set(cells)
+    lite=_shade(fill,0.34); dk=_shade(fill,-0.46)
     rects=[]
-    occ=set()
-    for (c,r) in bmp:
-        nc,nr=coords(c,r); occ.add((nc,nr))
-        rects.append(f'<rect x="{px(ox+nc*p)}" y="{px(oy+nr*p)}" width="{px(q)}" height="{px(q)}" fill="{fill}"/>')
-    # bezel: light on top+left exposed edges, dark on bottom+right exposed edges
+    for (c,r) in occ:
+        rects.append(f'<rect x="{px(ox+c*u)}" y="{px(oy+r*u)}" width="{px(u+0.5)}" height="{px(u+0.5)}" fill="{fill}"/>')
     lite_seg=[]; dk_seg=[]
-    for (nc,nr) in occ:
-        x=ox+nc*p; y=oy+nr*p
-        if (nc,nr-1) not in occ: lite_seg.append(f'M{px(x)},{px(y)} h{px(q)}')      # top
-        if (nc-1,nr) not in occ: lite_seg.append(f'M{px(x)},{px(y)} v{px(q)}')      # left
-        if (nc,nr+1) not in occ: dk_seg.append(f'M{px(x)},{px(y+q)} h{px(q)}')      # bottom
-        if (nc+1,nr) not in occ: dk_seg.append(f'M{px(x+q)},{px(y)} v{px(q)}')      # right
-    b=(f'<path d="{" ".join(lite_seg)}" stroke="{lite}" stroke-width="1.6" fill="none"/>'
-       f'<path d="{" ".join(dk_seg)}" stroke="{dk}" stroke-width="1.6" fill="none"/>')
-    return ''.join(rects)+b
+    for (c,r) in occ:
+        x=ox+c*u; y=oy+r*u
+        if (c,r-1) not in occ: lite_seg.append(f'M{px(x)},{px(y)} h{px(u)}')       # top edge -> light
+        if (c-1,r) not in occ: lite_seg.append(f'M{px(x)},{px(y)} v{px(u)}')       # left edge -> light
+        if (c,r+1) not in occ: dk_seg.append(f'M{px(x)},{px(y+u)} h{px(u)}')       # bottom -> dark
+        if (c+1,r) not in occ: dk_seg.append(f'M{px(x+u)},{px(y)} v{px(u)}')       # right -> dark
+    bev=(f'<path d="{" ".join(lite_seg)}" stroke="{lite}" stroke-width="1.4" fill="none"/>'
+         f'<path d="{" ".join(dk_seg)}" stroke="{dk}" stroke-width="1.4" fill="none"/>')
+    return ''.join(rects)+bev
 
-def tail_layer(cover,static):
+# Z-link: horizontal bar with a one-step vertical jog (single silhouette).
+# thin: 2 units tall. In a 6-wide x 3-tall unit box:
+#   XXXX..
+#   ..XXXX   (jog) -> reads as a Z/S. mirror flips vertically for return rows.
+Z_UNITS      =[(0,0),(1,0),(2,0),(3,0),(2,1),(3,1),(4,1),(5,1)]
+Z_UNITS_MIR  =[(0,1),(1,1),(2,1),(3,1),(2,0),(3,0),(4,0),(5,0)]
+
+def tail_dot(cx,cy,rad,fill,edge,horiz=False,mirror=False,over=1.0,thick=1.0):
+    """Single-silhouette Z-link. thin. `thick` scales the perpendicular size
+    (for the folding tail). horiz=False rotates it 90deg for vertical runs."""
+    base=Z_UNITS_MIR if mirror else Z_UNITS
+    cols=6; rows=2
+    u=(CELL/6.0)                              # thin unit
+    W=cols*u; H=rows*u*thick
+    if horiz:
+        ox=cx-W/2; oy=cy-H/2
+        cells=[(c, r) for (c,r) in base]
+        # scale thickness by stretching rows outward
+        return _bevel_outline_scaled(cells,u,ox,oy,fill,thick,axis='y')
+    else:
+        # rotate 90: (c,r)->(r, cols-1-c)
+        ox=cx-H/2; oy=cy-W/2
+        cells=[(r, cols-1-c) for (c,r) in base]
+        return _bevel_outline_scaled(cells,u,ox,oy,fill,thick,axis='x')
+
+def _bevel_outline_scaled(cells,u,ox,oy,fill,thick,axis):
+    """like _bevel_outline but stretches the shape thicker along one axis,
+    centered, keeping a single silhouette."""
+    occ=set(cells)
+    lite=_shade(fill,0.34); dk=_shade(fill,-0.46)
+    # thickness scaling on the perpendicular axis
+    def rect(c,r):
+        if axis=='y':
+            h=u*thick; yy=oy+r*u - (h-u)/2*0  # grow outward: shift handled below
+            return (ox+c*u, oy+r*u*thick, u+0.5, u*thick+0.5)
+        else:
+            return (ox+c*u*thick, oy+r*u, u*thick+0.5, u+0.5)
+    rects=[]
+    for (c,r) in occ:
+        x,y,w,h=rect(c,r)
+        rects.append(f'<rect x="{px(x)}" y="{px(y)}" width="{px(w)}" height="{px(h)}" fill="{fill}"/>')
+    lite_seg=[]; dk_seg=[]
+    for (c,r) in occ:
+        x,y,w,h=rect(c,r)
+        if (c,r-1) not in occ: lite_seg.append(f'M{px(x)},{px(y)} h{px(w)}')
+        if (c-1,r) not in occ: lite_seg.append(f'M{px(x)},{px(y)} v{px(h)}')
+        if (c,r+1) not in occ: dk_seg.append(f'M{px(x)},{px(y+h)} h{px(w)}')
+        if (c+1,r) not in occ: dk_seg.append(f'M{px(x+w)},{px(y)} v{px(h)}')
+    bev=(f'<path d="{" ".join(lite_seg)}" stroke="{lite}" stroke-width="1.4" fill="none"/>'
+         f'<path d="{" ".join(dk_seg)}" stroke="{dk}" stroke-width="1.4" fill="none"/>')
+    return ''.join(rects)+bev
+
+def turn_link(cx,cy,fill,which,thick=1.0):
+    """T-tile, legs pointing INWARD toward the turn centre. which in
+    {'top','bottom','mid_l','mid_r'}: top/bottom sit on the edge rows (crossbar
+    along the row, leg down/up); mid_l/mid_r are the off-grid tiles (vertical
+    crossbar, leg pointing left/right inward). Crossbars span the FULL tile width
+    (6 units) so the T reads clearly and connects continuously with the run."""
+    u=CELL/6.0
+    if which=='top':      cells=[(0,0),(1,0),(2,0),(3,0),(4,0),(5,0),(2,1),(3,1)]  # full bar top, leg down
+    elif which=='bottom': cells=[(0,1),(1,1),(2,1),(3,1),(4,1),(5,1),(2,0),(3,0)]  # full bar bottom, leg up
+    elif which=='mid_l':  cells=[(1,0),(1,1),(1,2),(1,3),(1,4),(1,5),(0,2),(0,3)]  # full vbar right, leg LEFT
+    else:                 cells=[(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(1,2),(1,3)]  # full vbar left, leg RIGHT
+    cols=max(c for c,r in cells)+1; rows=max(r for c,r in cells)+1
+    ox=cx-cols*u/2; oy=cy-rows*u/2
+    return _bevel_outline(cells,u,ox,oy,fill)
+
+def tail_layer(cover_unused,static):
+    """Render each path tile as Z (straight), or a T-tile at turn positions:
+    turn-edge cell whose NEXT tile is a mid -> T-top; whose PREV is a mid ->
+    T-bottom; a mid tile itself -> T-mid (leg inward). Per-tile thickness
+    tapers (fresh links thin, folded body thick) and steps at folds."""
     if static: return []
+    S=_SIM; cover=S['cover']; path=S['path']
+    NC=len(path)
     s=[]
-    # map each cell to its predecessor/successor in the path to know orientation
-    path=build_path(); idx={c:i for i,c in enumerate(path)}
-    for cell,ivs in cover.items():
+    for i in range(NC):
+        ivs=cover[i]
         if not ivs: continue
-        c,r=cell
-        x,y=cell_xy(c,r)
-        i=idx[cell]
-        prevc=path[i-1] if i>0 else cell
-        nextc=path[i+1] if i+1<len(path) else cell
-        # horizontal unless this cell is a row-turn (col unchanged between
-        # neighbours) -> then it's the vertical drop link
-        turn = (prevc[0]==cell[0]==nextc[0]) or (prevc[1]!=nextc[1] and prevc[0]==cell[0])
-        horiz = not (cell[0]==prevc[0] and cell[0]==nextc[0] or cell[0]==nextc[0])
-        # simpler: vertical only when the successor is directly below (drop)
-        vertical = (nextc[0]==cell[0] and nextc[1]!=cell[1]) or (prevc[0]==cell[0] and prevc[1]!=cell[1])
-        d=tail_dot(x+CELL/2,y+CELL/2,4.3,GREEN,None,horiz=not vertical)
-        vals=["0"]; kts=["0"]
-        for a,b in ivs:
-            vals+=["1","0"]; kts+=[f"{kt(a):.5f}",f"{kt(b):.5f}"]
-        s.append(f'<g opacity="0"><animate attributeName="opacity" calcMode="discrete" '
-                 f'values="{";".join(vals)}" keyTimes="{";".join(kts)}" '
-                 f'dur="{T:.2f}s" repeatCount="indefinite"/>{d}</g>')
+        c,r,kind=path[i]; x,y=cell_xy(c,r,kind)
+        cx,cy=(x+CELL/2,y+CELL/2) if kind=='cell' else (x,y)
+        pv=path[i-1] if i>0 else path[i]
+        nx=path[i+1] if i+1<NC else path[i]
+        if kind=='mid':
+            base=turn_link(cx,cy,GREEN,'mid_l' if c>=COLS else 'mid_r')
+            vertical=True
+        elif nx[2]=='mid':                 # top edge of a turn (about to turn)
+            base=turn_link(cx,cy,GREEN,'top'); vertical=False
+        elif pv[2]=='mid':                 # bottom edge of a turn (just turned)
+            base=turn_link(cx,cy,GREEN,'bottom'); vertical=False
+        else:
+            base=tail_dot(cx,cy,4,GREEN,None,horiz=True,mirror=(r%2==1)); vertical=False
+        # opacity + thickness (perpendicular scale) keyframes
+        ovals=["0"]; okts=["0"]
+        for a,b,th in ivs:
+            ovals+=["1","0"]; okts+=[f"{kt(a):.5f}",f"{kt(b):.5f}"]
+        seq=[]
+        for a,b,th in ivs:
+            seq.append((kt(a),th))
+        # scale values: perpendicular axis = thickness/BASE (shape already BASE)
+        BASE=S['BASE']
+        thvals=[]; thkts=[]
+        for ktv,th in seq:
+            m=th
+            thvals.append(f"{'%.3f'%m} 1" if vertical else f"1 {'%.3f'%m}")
+            thkts.append(f"{ktv:.5f}")
+        if thkts[0]!="0.00000": thvals.insert(0,thvals[0]); thkts.insert(0,"0")
+        if thkts[-1]!="1.00000": thvals.append(thvals[-1]); thkts.append("1.00000")
+        g=(f'<g opacity="0">'
+           f'<animate attributeName="opacity" calcMode="discrete" values="{";".join(ovals)}" '
+           f'keyTimes="{";".join(okts)}" dur="{T:.2f}s" repeatCount="indefinite"/>'
+           f'<g transform="translate({px(cx)},{px(cy)})">'
+           f'<animateTransform attributeName="transform" type="scale" additive="sum" '
+           f'calcMode="discrete" values="{";".join(thvals)}" keyTimes="{";".join(thkts)}" '
+           f'dur="{T:.2f}s" repeatCount="indefinite"/>'
+           f'<g transform="translate({px(-cx)},{px(-cy)})">{base}</g></g></g>')
+        s.append(g)
     return s
 
 def python_head(animate=False):
-    """pixel-rhombus python head (points +x): stepped diamond body, a lighter
-    top-left facet for 8-bit shading, two eyes, and a red forked tongue that
-    flicks when animate=True."""
-    body=_shade(PLUM,0.0)
-    # stepped diamond outline (chunky 8-bit silhouette), points at +x / -x
+    """pixel-rhombus python head (points +x): stepped diamond, light facet,
+    pixel eyes, red forked tongue that flicks when animate=True."""
     pts="13,0 9,-3 5,-6 0,-8 -5,-6 -9,-3 -13,0 -9,3 -5,6 0,8 5,6 9,3"
-    facet="0,-8 -5,-6 -9,-3 -13,0 -6,0 0,-4"     # upper-left light facet
-    tongue=('<path d="M13,0 H19 M19,0 L23,-3 M19,0 L23,3" '
-            'fill="none" stroke="'+RED+'" stroke-width="2"'
-            + ('><animate attributeName="d" dur="0.5s" repeatCount="indefinite" '
-               'values="M13,0 H19 M19,0 L23,-3 M19,0 L23,3;'
-               'M13,0 H21 M21,0 L25,-4 M21,0 L25,4;'
-               'M13,0 H19 M19,0 L23,-3 M19,0 L23,3"/></path>'
+    facet="0,-8 -5,-6 -9,-3 -13,0 -6,0 0,-4"
+    tongue=('<path d="M13,0 H15 M15,0 L17,-1 M15,0 L17,1" fill="none" stroke="'+RED+'" '
+            'stroke-width="2" stroke-linecap="round"'
+            + ('><animate attributeName="d" dur="1.15s" repeatCount="indefinite" '
+               'calcMode="spline" keyTimes="0;0.10;0.20;0.30;0.42;1" '
+               'keySplines="0.3 0 0.2 1;0.3 0 0.2 1;0.3 0 0.2 1;0.3 0 0.2 1;0.3 0 0.2 1" '
+               'values="'
+               'M13,0 H15 M15,0 L17,-1 M15,0 L17,1;'      # tucked
+               'M13,0 H24 M24,0 L29,-5 M24,0 L29,5;'      # dart out, fork wide
+               'M13,0 H19 M19,0 L23,-3 M19,0 L23,3;'      # half
+               'M13,0 H24 M24,0 L29,-5 M24,0 L29,5;'      # dart out again
+               'M13,0 H15 M15,0 L17,-1 M15,0 L17,1;'      # tucked
+               'M13,0 H15 M15,0 L17,-1 M15,0 L17,1'       # hold tucked (rest of cycle)
+               '"/></path>'
                if animate else '/>'))
     return (f'{tongue}'
-            f'<polygon points="{pts}" fill="{body}" stroke="{PL}" stroke-width="2.4"/>'
+            f'<polygon points="{pts}" fill="{PLUM}" stroke="{PL}" stroke-width="2.4"/>'
             f'<polygon points="{facet}" fill="{PL}" opacity="0.55"/>'
             f'<rect x="0.5" y="-4.4" width="4" height="4" fill="{WHITE}"/>'
             f'<rect x="0.5" y="0.4" width="4" height="4" fill="{WHITE}"/>'
@@ -366,10 +557,8 @@ def python_head(animate=False):
             f'<rect x="2.3" y="1.8" width="1.8" height="1.8" fill="{BLACK}"/>')
 
 def head_angles(frames):
-    """travel direction per keyframe: art points +x -> right=0 left=180
-    down=90 up=270."""
-    angs=[]
-    prev=90.0
+    """travel direction per keyframe: art points +x -> right=0 down=90 left=180 up=270."""
+    angs=[]; prev=90.0
     for i in range(len(frames)):
         if i+1<len(frames):
             dx=frames[i+1][1]-frames[i][1]; dy=frames[i+1][2]-frames[i][2]
@@ -520,17 +709,21 @@ def score_layer(sc,total,static):
 
 def build(grid, static=False):
     path,t_eat,t_dep,frames,cover,sc,total=simulate(grid)
-    out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CW} {CH}" '
-         f'width="{CW}" height="{CH}">']
+    ix,iy=OX+BW,OY+BW; iw=PW-2*BW; ih=PH-2*BW
+    cid='panelclip_A'
+    out=[f'<defs><clipPath id="{cid}">'
+         f'<rect x="{ix}" y="{iy}" width="{iw}" height="{ih}"/></clipPath></defs>']
     out+=frame()
     out+=prompt(static)
     out+=screen_and_labels(grid)
     out+=cells_layer(grid,t_eat,t_dep,static)
-    out+=tail_layer(cover,static)
-    out+=head_layer(frames,static)
+    snake=tail_layer(cover,static)+head_layer(frames,static)
+    out.append(f'<g clip-path="url(#{cid})">{"".join(snake)}</g>')
     out+=score_layer(sc,total,static)
-    out.append('</svg>')
-    return ''.join(out), total
+    body="".join(out)
+    svg=(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CW} {CH}" '
+         f'width="{CW}" height="{CH}">{body}</svg>')
+    return svg, total
 
 def main():
     ap=argparse.ArgumentParser()
