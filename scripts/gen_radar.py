@@ -59,8 +59,8 @@ def l_frame():
 
 # --------------------------------------------------------- typed prompt ----
 PROMPT_TXT="> github.exe -RDR -TRPH"
-T0=0.35; CPS=0.05
-T_DONE=T0+len(PROMPT_TXT)*CPS        # 1.5s
+T0=14.71; CPS=0.05                   # CASCADE: starts when panel2's prompt finishes typing
+T_DONE=T0+len(PROMPT_TXT)*CPS        # 15.86 -> more(me) starts here
 T_PULSE=T_DONE+0.30                  # prompt starts pulsing
 T_GRID=T_DONE+0.25                   # empty graph pops
 T_SON=T_DONE+0.90                    # first sonar wave launches

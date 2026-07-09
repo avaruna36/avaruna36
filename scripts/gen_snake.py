@@ -53,7 +53,7 @@ CXC=OX+PW/2                             # panel centre for centred texts
 
 # ---- timeline ---------------------------------------------------------------
 PROMPT_TXT="> python eat my-progress.py"
-T0=0.35; CPS=0.05
+T0=16.36; CPS=0.05   # CASCADE: snake prompt types when "> more(me)" finishes typing
 T_TYPE_DONE=T0+len(PROMPT_TXT)*CPS
 T_POP=T_TYPE_DONE+0.35                  # head pops ABOVE the calendar
 T_HOP=T_POP+0.75                        # hop toward the first cell

@@ -26,7 +26,7 @@ def _sh(hexc,f):
     m=lambda v:int(round(v+(t-v)*f))
     return f"#{m(r):02X}{m(g):02X}{m(b):02X}"
 
-def build():
+def build(phase=0.0):
     x0=ML; x1=ML+PW; span=x1-x0
     n=int((span+GAP)//PITCH)
     x0=ML+(span-(n*PITCH-GAP))/2
@@ -42,6 +42,9 @@ def build():
     lite=_sh(CURSOR,0.34); dk=_sh(CURSOR,-0.36)
     left=x0-3; right=x0+(n-1)*PITCH+DASH_W-cw+3
     cyt=CY-ch/2
+    # phase: negative begin starts the bounce mid-cycle so multiple dividers on the
+    # same page run OUT OF PHASE with each other.
+    beg=f' begin="-{phase:.2f}s"' if phase>0 else ''
     cur=(f'<g>'
          f'<rect x="0" y="{px(cyt)}" width="{cw}" height="{ch}" rx="1" fill="{CURSOR}"/>'
          f'<rect x="0" y="{px(cyt)}" width="{cw}" height="1.4" fill="{lite}"/>'
@@ -51,16 +54,21 @@ def build():
          f'<animateTransform attributeName="transform" type="translate" '
          f'values="{px(left)},0;{px(right)},0;{px(left)},0" '
          f'keyTimes="0;0.5;1" dur="3.2s" calcMode="spline" '
-         f'keySplines="0.45 0 0.55 1;0.45 0 0.55 1" repeatCount="indefinite"/>'
+         f'keySplines="0.45 0 0.55 1;0.45 0 0.55 1" repeatCount="indefinite"{beg}/>'
          f'</g>')
     s.append(cur)
     s.append('</svg>')
     return ''.join(s)
 
 def main():
+    # three out-of-phase dividers (one per README slot), phases at thirds of the cycle
     out=os.environ.get("OUT","divider.svg")
-    open(out,'w').write(build())
-    print(f"wrote {out} {CW}x{CH}")
+    base=os.path.dirname(out)
+    stem=os.path.join(base,'divider') if base else 'divider'
+    files=[(out,0.0),(f'{stem}2.svg',3.2/3),(f'{stem}3.svg',2*3.2/3)]
+    for fn,ph in files:
+        open(fn,'w').write(build(phase=ph))
+        print(f"wrote {fn} {CW}x{CH} phase=-{ph:.2f}s")
 
 if __name__=="__main__":
     main()
