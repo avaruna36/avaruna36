@@ -53,8 +53,17 @@ CXC=OX+PW/2                             # panel centre for centred texts
 
 # ---- timeline ---------------------------------------------------------------
 PROMPT_TXT="> python eat my-progress.py"
-T0=16.36; CPS=0.05   # CASCADE: snake prompt types when "> more(me)" finishes typing
+T0=0.35; CPS=0.05    # IN-LOOP schedule origin: the eat->reset loop keeps its
+                     # original ~35s period and cycles GAPLESSLY (resting loop).
 T_TYPE_DONE=T0+len(PROMPT_TXT)*CPS
+# ---- one-time cascade intro (fires once, not per loop) ----------------------
+# "> python eat my-progress.py" types when "> more(me)" finishes typing (16.36),
+# then pulses forever; the calendar+score+snake stay BLANK until typing is done
+# and the pulse has started, then pop in permanently and the loop begins.
+T0_ABS=16.36
+T_TYPE_DONE_ABS=T0_ABS+len(PROMPT_TXT)*CPS      # 17.71
+T_PULSE_ABS=T_TYPE_DONE_ABS+0.3                 # 18.01 prompt starts pulsing
+T_REVEAL=T_PULSE_ABS+0.15                       # 18.16 calendar+score pop in; loop starts
 T_POP=T_TYPE_DONE+0.35                  # head pops ABOVE the calendar
 T_HOP=T_POP+0.75                        # hop toward the first cell
 T_F0=T_HOP+0.55                         # forward eating starts
@@ -97,10 +106,10 @@ def prompt(static):
         xoff=tx+F.measure(PROMPT_TXT[:i],'vt',fs)
         g,_=F.text_svg(ch,'vt',fs,xoff,ty,BLACK)
         chars.append(f'<g opacity="0"><set attributeName="opacity" to="1" '
-                     f'begin="{T0+i*CPS:.2f}s" fill="freeze"/>{g}</g>')
+                     f'begin="{T0_ABS+i*CPS:.2f}s" fill="freeze"/>{g}</g>')
     s.append(f'<g>{"".join(chars)}'
              f'<animate attributeName="opacity" values="1;0.35;1" dur="1.1s" '
-             f'begin="{T_TYPE_DONE+0.3:.2f}s" repeatCount="indefinite"/></g>')
+             f'begin="{T_PULSE_ABS:.2f}s" repeatCount="indefinite"/></g>')
     return s
 
 # ---- calendar data: grid[c][r] = (count, iso_date) --------------------------
@@ -715,11 +724,24 @@ def build(grid, static=False):
          f'<rect x="{ix}" y="{iy}" width="{iw}" height="{ih}"/></clipPath></defs>']
     out+=frame()
     out+=prompt(static)
-    out+=screen_and_labels(grid)
-    out+=cells_layer(grid,t_eat,t_dep,static)
+    # game content (calendar + snake + score) is BLANK until the prompt has typed
+    # and started pulsing, then pops in permanently (one-time reveal).
+    game=[]
+    game+=screen_and_labels(grid)
+    game+=cells_layer(grid,t_eat,t_dep,static)
     snake=tail_layer(cover,static)+head_layer(frames,static)
-    out.append(f'<g clip-path="url(#{cid})">{"".join(snake)}</g>')
-    out+=score_layer(sc,total,static)
+    game.append(f'<g clip-path="url(#{cid})">{"".join(snake)}</g>')
+    game+=score_layer(sc,total,static)
+    gbody="".join(game)
+    if not static:
+        # gapless resting loop: every full-period animation starts at the reveal
+        # and repeats seamlessly every T (no lead-in pause inside the cycle).
+        gbody=gbody.replace(f'dur="{T:.2f}s" repeatCount="indefinite"',
+                            f'dur="{T:.2f}s" begin="{T_REVEAL:.2f}s" repeatCount="indefinite"')
+        out.append(f'<g opacity="0"><set attributeName="opacity" to="1" '
+                   f'begin="{T_REVEAL:.2f}s" fill="freeze"/>{gbody}</g>')
+    else:
+        out.append(gbody)
     body="".join(out)
     svg=(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CW} {CH}" '
          f'width="{CW}" height="{CH}">{body}</svg>')
